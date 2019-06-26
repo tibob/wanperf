@@ -1,7 +1,3 @@
-- Status in wsclient. Emit implementiert. Muss aber
-   jetzt in mainwindow ein slot erzeugt werden sowie den Status konsequent über die Funktion geändert werden.
-
-- Default with one flow.
 - Do not start Connection when no flow ist defined
 - Do no start Connection when UDP-Port is the same on two flows
 - Handle Connection problems

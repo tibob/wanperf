@@ -34,7 +34,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->bandwidthLayer->addItem("Layer 2", QVariant(NetworkModel::Layer2));
     ui->bandwidthLayer->addItem("Layer 3", QVariant(NetworkModel::Layer3));
     ui->bandwidthLayer->addItem("Layer 4", QVariant(NetworkModel::Layer4));
-    ui->bandwidthLayer->setCurrentIndex(1);
+    ui->bandwidthLayer->setCurrentIndex(2);
 
 
     ui->bandwidthUnit->addItem("bit/s", QVariant((int) 1));
@@ -47,7 +47,14 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->sizeLayer->addItem("Layer 2", QVariant(NetworkModel::Layer2));
     ui->sizeLayer->addItem("Layer 3", QVariant(NetworkModel::Layer3));
     ui->sizeLayer->addItem("Layer 4", QVariant(NetworkModel::Layer4));
-    ui->sizeLayer->setCurrentIndex(1);
+    ui->sizeLayer->setCurrentIndex(2);
+
+    //Initialise one flow
+    senderListModel->insertRow(0);
+
+    ui->udpSenderView->resizeColumnsToContents();
+    ui->udpSenderView->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+    ui->udpSenderView->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
 
     connect(&wsClient, SIGNAL(statusChanged()), this, SLOT(wsClientStatusChanged()));
 }

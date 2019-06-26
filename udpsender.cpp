@@ -16,7 +16,7 @@ UdpSender::UdpSender(QObject *parent) :
     setNetworkModel(NetworkModel());
 
     // Initialise PDU Size & Bandwidth to some Value
-    setBandwidth(1000, NetworkModel::Layer3);
+    setBandwidth(100000, NetworkModel::Layer3);
     setPduSize(1000, NetworkModel::Layer3);
 
     /***** Statistics ****/
