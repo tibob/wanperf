@@ -1,5 +1,3 @@
-- Handle Connection problems
-
 - "connect an geneate Traffic" should stop generating traffic first.
 
 - Update Flow status
@@ -13,25 +11,21 @@
 
 
 Whishlist
+- Handle Errors while connecting
 - dynamic port numbers per flow (would be easier for the user, only the expert needs to set the udp port?
 - Regularity of Stats - is it the sending or the stats?
 - Differentiate IPv4 from IPv6 when calculating the UDP-bandwidth to be send
 - Pause one of the UdpEcho
 - Change Parameters of flows while sending (disable port change)
-- Clean Networmodel
 - Update Status of UdpEcho when Sending / Paused
 - Resolve Hostname when tipping, and show IP that will be used
 - disconnect when quit
-- Column Size in Flows
-- Sending Rate / Receiving rate - only whith two decimals
 - Sending (and echo) must run in a separate thread
 - Optimise sending algorithm.
 - Handle TOS (Sending in wanperf)
-- Handle Errors while connecting
 - Why can't I go beyond 100 Mbit/s? Is there an overflow in the Udp stack?
     o it seems that the responder has to be optimised - currently based on signals
 - Graph the results qith QCustomPlot !
 - Choose DSCP from List (EF...)
-- Generate Traffic in a dedicaced Thread.
 - Do not start Connection when no flow ist defined
 - Do no start Connection when UDP-Port is the same on two flows
