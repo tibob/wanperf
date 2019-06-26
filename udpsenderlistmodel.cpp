@@ -31,6 +31,16 @@ QVariant UdpSenderListModel::data(const QModelIndex &index, int role) const
     if (index.row() > udpSenderList.count())
         return QVariant();
 
+    if (role == Qt::TextAlignmentRole) {
+        switch (index.column()) {
+            case COL_SENDINGRATE:
+            case COL_RECEIVINGRATE:
+                return Qt::AlignRight;
+            default:
+                return Qt::AlignLeft;
+        }
+    }
+
     if (role != Qt::DisplayRole && role != Qt::EditRole)
         return QVariant();
 
@@ -52,10 +62,10 @@ QVariant UdpSenderListModel::data(const QModelIndex &index, int role) const
             return udpSenderList[index.row()]->connectionStatus();
         case COL_SENDINGRATE:
             return locale.toString(udpSenderList[index.row()]->sendingRate(m_BandwidthLayer) / m_BandwidthUnit,
-                    'f', QLocale::FloatingPointShortest);
+                    'f', 2);
         case COL_RECEIVINGRATE:
             return locale.toString(udpSenderList[index.row()]->receivingRate(m_BandwidthLayer) / m_BandwidthUnit,
-                    'f', QLocale::FloatingPointShortest);
+                    'f', 2);
         case COL_PACKETLOST:
             return udpSenderList[index.row()]->packetLost();
     }

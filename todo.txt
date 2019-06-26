@@ -1,5 +1,3 @@
-- Do not start Connection when no flow ist defined
-- Do no start Connection when UDP-Port is the same on two flows
 - Handle Connection problems
 
 - "connect an geneate Traffic" should stop generating traffic first.
@@ -34,3 +32,6 @@ Whishlist
     o it seems that the responder has to be optimised - currently based on signals
 - Graph the results qith QCustomPlot !
 - Choose DSCP from List (EF...)
+- Generate Traffic in a dedicaced Thread.
+- Do not start Connection when no flow ist defined
+- Do no start Connection when UDP-Port is the same on two flows
