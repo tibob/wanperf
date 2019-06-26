@@ -156,12 +156,6 @@ uint UdpSender::specifiedPduSize(NetworkModel::Layer pduLayer)
 
 void UdpSender::sendOneDatagram()
 {
-    // NOTE: this optimisation should be counterchecked in setNetworkmodell
-//    Optimisation: this check is not needed because this will never happen (minimal datagram size: 18 Bytes).
-//    if (datagram == NULL || datagramLength < 16) {
-//        return;
-//    }
-
     qint64 msecNow = QDateTime::currentMSecsSinceEpoch();
 
     // Save Timestamp

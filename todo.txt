@@ -8,7 +8,8 @@
 
 - DSCP
 
-
+- "Bad" Statistics depends on when the statistic timer is called before or after the sending timer.
+   Will this be solved by threads? Alternative: Calculate rate on a longer term.
 
 Whishlist
 - Handle Errors while connecting
