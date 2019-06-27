@@ -91,6 +91,7 @@ private:
         sRemoteDisconnected,
         sConnectingUdpEcho,
         sUdpEchoConnected,
+        sSendingTraffic,
         sError
     };
     UdpSender::status m_status = UdpSender::sRemoteDisconnected;

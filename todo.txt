@@ -1,8 +1,3 @@
-- "connect an geneate Traffic" should stop generating traffic first.
-
-- Update Flow status
-
-
 - When Sending Traffic you should not be able to edit UDP-Port Number an DSCP-Value (as remote is not accessible)
  o Also change Column color
 

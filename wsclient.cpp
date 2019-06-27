@@ -52,7 +52,7 @@ void WsClient::connectRemoteToSetUp(QString hostname, quint16 port)
     changeStatus(WsClient::wscConnectingForSetUp, "Connecting to satellite");
     connectRemote(hostname, port);
     /* The next step is the SLOT onConnect() if the WebService connection was successful */
-    /* if we have an error, the Slot onDisconnect() ist called */
+    /* if we have an error, the Slot onDisconnect() is called */
 }
 
 void WsClient::connectRemoteToClose(QString hostname, quint16 port)
@@ -106,25 +106,32 @@ void WsClient::removeUdpEcho(QUuid id)
 
 void WsClient::onConnect()
 {
-    if (m_status != wsClientStatus::wscConnectingForSetUp) {
+    if (m_status == wscConnectingForClose) {
         // We probably just wanted to clear the UdpEcho-Server on the wanperfd side.
         // As just opening a Web Socket is enougth, we can close the connection.
-        changeStatus(wscRemoteDisconnected, "Disconnected");
+        changeStatus(wscRemoteDisconnected, "Not connected");
         ws->close();
         return;
     }
 
-    QJsonObject jsonMessage;
+    if (m_status == wscConnectingForSetUp) {
+        QJsonObject jsonMessage;
 
-    jsonMessage["messageType"] = "connect";
-    // NOTE: a global constant definition for the Version would be great
-    jsonMessage["version"] = "wanperf 0.2";
-    QJsonDocument jsonDoc(jsonMessage);
-    QString jsonString(jsonDoc.toJson());
+        jsonMessage["messageType"] = "connect";
+        // NOTE: a global constant definition for the Version would be great
+        jsonMessage["version"] = "wanperf 0.2";
+        QJsonDocument jsonDoc(jsonMessage);
+        QString jsonString(jsonDoc.toJson());
 
-    ws->sendTextMessage(jsonString);
+        ws->sendTextMessage(jsonString);
 
-    /* The next step is the slot messageReceived, to read the answer of remote */
+        /* The next step is the slot messageReceived, to read the answer of remote */
+        return;
+    }
+
+    // This should never be reached
+    changeStatus(wscError, "Error: unexpected connection");
+    return;
 }
 
 /* This slot parses messages received from theremote wanperfd */
@@ -191,6 +198,7 @@ void WsClient::onDisconnect()
 
     switch (m_status) {
     case WsClient::wscConnectingForSetUp:
+    case WsClient::wscConnectingForClose:
         //FIXME: emit a Status change and change Status to error
         changeStatus(WsClient::wscError, QString("Error while connecting: ") + ws->errorString());
         ws->close();

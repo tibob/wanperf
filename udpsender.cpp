@@ -184,7 +184,8 @@ void UdpSender::startTraffic()
     /* adapt Timer resolution ? */
     timer->start(timerResolution);
 
-    /* TODO: Status sending */
+    m_status = UdpSender::sSendingTraffic;
+    emit connectionStatusChanged();
 }
 
 void UdpSender::stopTraffic()
@@ -194,6 +195,10 @@ void UdpSender::stopTraffic()
         delete timer;
         timer = NULL;
     }
+
+    m_status = UdpSender::sRemoteDisconnected;
+    emit connectionStatusChanged();
+
 }
 
 qreal UdpSender::sendingRate(NetworkModel::Layer bandwidthLayer)
@@ -220,7 +225,10 @@ QString UdpSender::connectionStatus()
         return "Connecting Flow";
     case sUdpEchoConnected:
         return "Flow connected";
+    case sSendingTraffic:
+        return "Sending Traffic";
     case sError:
+    default:
         return "Error";
     }
 
