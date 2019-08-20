@@ -35,7 +35,6 @@ public slots:
 
 private:
     Ui::MainWindow *ui;
-    QUdpSocket udpSocket;
     quint64 sendingCounter = 10000;
     quint64 receivedCounter = 0;
 

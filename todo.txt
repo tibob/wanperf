@@ -1,15 +1,21 @@
+Multithreading:
+- add change TOS-parameter (restart thread)
+- make wanperfd multithread
+- current performance:
+    O 100 Mbit/s at 64 Bytes Frames. (Tuned sysctl net.core.rmem_default / sysctl net.core.rmem_max)
+    O 1 Gbit/s at 1500 Bytes Frames whitout tuning of linux, but 1 microsec sleep
+      o alternate read an write for each packet.
+      o I want to tune QAbstractSocket::ReceiveBufferSizeSocketOption and QAbstractSocket::SendBufferSizeSocketOption. Set it to 500000000 ? Be root :-(
+
 - When Sending Traffic you should not be able to edit UDP-Port Number an DSCP-Value (as remote is not accessible)
  o Also change Column color
 
 - DSCP
-
-- "Bad" Statistics depends on when the statistic timer is called before or after the sending timer.
-   Will this be solved by threads? Alternative: Calculate rate on a longer term.
+ o Have Qt change their code or inherit QUdpSocket
 
 Whishlist
 - Handle Errors while connecting
 - dynamic port numbers per flow (would be easier for the user, only the expert needs to set the udp port?
-- Regularity of Stats - is it the sending or the stats?
 - Differentiate IPv4 from IPv6 when calculating the UDP-bandwidth to be send
 - Pause one of the UdpEcho
 - Change Parameters of flows while sending (disable port change)
@@ -25,3 +31,4 @@ Whishlist
 - Choose DSCP from List (EF...)
 - Do not start Connection when no flow ist defined
 - Do no start Connection when UDP-Port is the same on two flows
+- Add latency as a statistic

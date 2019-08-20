@@ -39,9 +39,7 @@ public slots:
     // It will start sending Traffic when all udpSender are connected
     void connectionStatusChanged();
 
-    /* When a udpSender emits UdpSener::statsChanged, we need to update the Stats Columns
-    for that Line */
-    void statsUpdated();
+    void updateStats();
 
 private:
     QList<UdpSender *> udpSenderList;

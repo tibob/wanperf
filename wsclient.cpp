@@ -82,8 +82,6 @@ void WsClient::connectUdpEcho(QUuid id, quint16 port, quint8 tos)
     QJsonDocument jsonDoc(jsonMessage);
     QString jsonString(jsonDoc.toJson());
 
-    qDebug() << jsonString;
-
     ws->sendTextMessage(jsonString);
 
     /* The next step is the slot messageReceived, to read the answer of Remote */

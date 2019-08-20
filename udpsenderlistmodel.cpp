@@ -5,6 +5,10 @@
 UdpSenderListModel::UdpSenderListModel(QObject *parent)
     : QAbstractTableModel(parent)
 {
+    // Refresh stats every second
+    QTimer *statsTimer = new QTimer(this);
+    connect(statsTimer, SIGNAL(timeout()), this, SLOT(updateStats()));
+    statsTimer->start(1000);
 }
 
 int UdpSenderListModel::rowCount(const QModelIndex &parent) const
@@ -96,7 +100,7 @@ QVariant UdpSenderListModel::headerData(int section, Qt::Orientation orientation
         case COL_STATUS:
             return "Connection status";
         case COL_SENDINGRATE:
-            return "Seinding rate";
+            return "Sending rate";
         case COL_RECEIVINGRATE:
             return "Receiving rate";
         case COL_PACKETLOST:
@@ -179,6 +183,7 @@ bool UdpSenderListModel::insertRows(int position, int rows, const QModelIndex &/
 
     for (int row = 0; row < rows; row++) {
         sender = new UdpSender();
+
         sender->setWsClient(m_wsClient);
         udpSenderList.insert(position, sender);
         /* Be sure that the sender has its Bandwidth stored in the same Layer als the UI
@@ -188,7 +193,6 @@ bool UdpSenderListModel::insertRows(int position, int rows, const QModelIndex &/
 
         // Permit the underlying data to tell it changed.
         connect(sender, SIGNAL(connectionStatusChanged()), this, SLOT(connectionStatusChanged()));
-        connect(sender, SIGNAL(statsChanged()), this, SLOT(statsUpdated()));
     }
 
     endInsertRows();
@@ -217,7 +221,7 @@ void UdpSenderListModel::setPDUSizeLayer(NetworkModel::Layer layer)
 {
     m_PDUSizeLayer = layer;
     emit headerDataChanged(Qt::Horizontal, 0, columnCount());
-    emit dataChanged(index(0, 0), index(rowCount(), columnCount()));
+    emit dataChanged(index(0, 0), index(rowCount()-1, columnCount()-1));
 }
 
 void UdpSenderListModel::setBandwidthLayer(NetworkModel::Layer layer)
@@ -234,8 +238,7 @@ void UdpSenderListModel::setBandwidthLayer(NetworkModel::Layer layer)
     }
 
     emit headerDataChanged(Qt::Horizontal, 0, columnCount());
-    emit dataChanged(index(0, 0), index(rowCount(), columnCount()));
-}
+    emit dataChanged(index(0, 0), index(rowCount()-1, columnCount()-1));}
 
 void UdpSenderListModel::setBandwidthUnit(int bandwidthUnit)
 {
@@ -245,7 +248,7 @@ void UdpSenderListModel::setBandwidthUnit(int bandwidthUnit)
     // a Networkmodel::BandwidthUnit, so that we can get the name an the value from the Networkmodel
     //     emit headerDataChanged(Qt::Horizontal, 0, columnCount());
 
-    emit dataChanged(index(0, 0), index(rowCount(), columnCount()));
+    emit dataChanged(index(0, 0), index(rowCount()-1, columnCount()-1));
 }
 
 void UdpSenderListModel::setWsClient(WsClient *wsClient)
@@ -296,15 +299,7 @@ void UdpSenderListModel::connectionStatusChanged()
     }    
 }
 
-void UdpSenderListModel::statsUpdated()
+void UdpSenderListModel::updateStats()
 {
-    UdpSender *udpSender;
-
-    // we neet to know which Line is to update
-    udpSender = qobject_cast<UdpSender *>(sender());
-
-    int senderIndex = udpSenderList.indexOf(udpSender);
-
-    // One of the UdpSender has a new connection status, tell someting in the column changed.
-    emit dataChanged(index(senderIndex, COL_SENDINGRATE), index(senderIndex, COL_PACKETLOST));
+    emit dataChanged(index(0, COL_SENDINGRATE), index(rowCount()-1, COL_PACKETLOST));
 }

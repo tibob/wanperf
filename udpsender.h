@@ -5,8 +5,10 @@
 #include <QUdpSocket>
 #include <QTimer>
 #include <QUuid>
+
 #include "networkmodel.h"
 #include "wsclient.h"
+#include "udpsenderthread.h"
 
 class UdpSender : public QObject
 {
@@ -33,7 +35,6 @@ public:
     void setPduSize(uint pduSize, NetworkModel::Layer pduSizeLayer);
     uint specifiedPduSize(NetworkModel::Layer pduLayer);
 
-    void sendOneDatagram();
     void startTraffic();
     void stopTraffic();
 
@@ -52,11 +53,9 @@ signals:
     void statsChanged();
 
 public slots:
-    void sendUdpDatagrams();
-    void readPendingDatagrams();
     void remoteConnectedForSetUp();
     void udpEchoConnected(QUuid id);
-    void calculateStatistics();
+    void receiveStatistics(qreal L4BandwidthSend, qreal L4BandwidthReceived, qreal packetsLost);
 
 private:
     // We have to keep track what parameters have been set for the udpSender
@@ -70,15 +69,14 @@ private:
     // These values are calculated from the parameters bandwidth and pduSize
     // Default values are set do avoid a division by zero somewhere
     // This is the Payoad of udp without header.
-    int datagramSDULength;
+    int m_datagramSDULength;
     // Packets per milisecond to send. We work with miliseconds to reduce calculation in the sending algotithm.
     qreal m_ppmsec;
 
-    char *datagram = NULL;
-    quint64 m_sendingCounter = 0;
-    quint64 m_awaitedCounter = 0;
     QHostAddress destination;
-    QUdpSocket udpSocket;
+
+    UdpSenderThread m_thread;
+
     int m_udpPort = 4212;
     quint8 mTos = 0;
 
@@ -96,50 +94,14 @@ private:
     };
     UdpSender::status m_status = UdpSender::sRemoteDisconnected;
 
-    /* Variables for running a Test */
-    // Time (msec) when last time sendUdpDatagrams was called
-    qint64 msecLast;
-    QTimer *timer = NULL;
-    // Resolution of sending timer in msec
-    int timerResolution = 10;
-    // how much "subpackets" (part of a packet) could not be send and will be send next timer call?
-    qreal packets2Send = 0;
-
     NetworkModel m_networkModel;
 
     /***** Statistics *****/
-//    // Statistics: store timestamp & L4 SDU (Payload without UDP header) Bytes sent
-//    QVector<qint64> listTimestamp;
-//    QVector<int>    listL4BytesSend;
-
-
-    // Statistics: delay between calculations in miliseconds.
-    int statsCalculationDelay = 1000;
-    // Time of current Statistics
-    qint64 m_msecPreviousStats;
-    // Statistics: actual value and value from the last calculation
-    quint64 m_L4BytesSent = 0;
-    quint64 m_previousL4BytesSent = 0;
-    quint64 m_L4BytesReceived = 0;
-    quint64 m_previousL4BytesReceived = 0;
-    // PacketsSent = m_sendingCounter
-    quint64 m_PacketsReceived = 0;
-    quint64 m_previousPacketsReceived = 0;
     quint64 m_PacketsLost = 0;
-    quint64 m_CummuledLatency = 0;
-    quint64 m_previousCummuledLatency = 0;
-    // Statistical results
     qreal m_statL4BandwidthSent = 0;
     qreal m_statL4BandwidthReceived = 0;
-    qreal m_statAverageLatency = 0;
-    // NOTE: one could wand packet lost per second
-    // qreak m_statPacketLostPerSecond;
-
-    // Time where the Class is created, in sec to epoch
-    uint m_referenceDate;
 
     QString m_Name;
-
 };
 
 #endif // UDPSENDER_H
