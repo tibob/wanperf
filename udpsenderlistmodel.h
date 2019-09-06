@@ -34,6 +34,8 @@ public:
 
     void stopAllSender();
 
+    void setGeneratingTrafficStatus(bool state);
+
 public slots:
     // Connected to the UdpSender::dataChanged, so that an update of the UI occurs.
     // It will start sending Traffic when all udpSender are connected
@@ -68,6 +70,8 @@ private:
 
     // Communication with remote
     WsClient *m_wsClient = NULL;
+
+    bool m_isGeneratingTraffic = false;
 };
 
 #endif // UDPSENDERLISTMODEL_H

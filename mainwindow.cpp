@@ -73,7 +73,8 @@ void MainWindow::on_btnConnect_clicked()
 {
     senderListModel->stopAllSender();
 
-    // FIXME: Host & Port from UI
+    senderListModel->setGeneratingTrafficStatus(true);
+
     wsClient.connectRemoteToSetUp(ui->destinationHost->text());
 }
 
@@ -84,6 +85,8 @@ void MainWindow::on_btnDisconnect_clicked()
     senderListModel->stopAllSender();
 
     wsClient.connectRemoteToClose(ui->destinationHost->text());
+
+    senderListModel->setGeneratingTrafficStatus(false);
 }
 
 void MainWindow::on_insertUdpSender_clicked()

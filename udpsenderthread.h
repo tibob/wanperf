@@ -45,6 +45,7 @@ private:
     /* Locker when accessing Parameter and Statistics */
     QMutex m_Mutex;
     volatile bool m_stopped = false;
+
 };
 
 #endif // UDPSENDERTHREAD_H

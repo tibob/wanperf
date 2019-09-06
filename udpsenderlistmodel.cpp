@@ -169,6 +169,13 @@ Qt::ItemFlags UdpSenderListModel::flags(const QModelIndex &index) const
         return Qt::ItemIsSelectable | Qt::ItemIsEnabled;
     }
 
+    if (m_isGeneratingTraffic) {
+        if (index.column() == COL_DSCP || index.column() == COL_PORT) {
+            // These Columns can not be edited while generating Trafic
+            return  Qt::ItemIsSelectable;
+        }
+    }
+
     return QAbstractItemModel::flags(index) | Qt::ItemIsEditable;
 }
 
@@ -268,6 +275,13 @@ void UdpSenderListModel::stopAllSender()
     foreach (sender, udpSenderList) {
         sender->stopTraffic();
     }
+}
+
+void UdpSenderListModel::setGeneratingTrafficStatus(bool state)
+{
+    m_isGeneratingTraffic = state;
+    // Refresh the Table
+    emit dataChanged(index(0, 0), index(rowCount()-1, columnCount()-1));
 }
 
 void UdpSenderListModel::connectionStatusChanged()
