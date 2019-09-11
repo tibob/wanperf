@@ -68,11 +68,6 @@ private:
     uint minL2FrameLength;
     uint maxL2FrameLength;
 
-    uint m_L1FrameSize;
-    uint m_L2FrameSize;
-    uint m_L3PacketSize;
-    uint m_L4DatagramSize;
-
     NetworkModel::Layer inputBandwidthLayer = NetworkModel::Layer2;
 };
 
