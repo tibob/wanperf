@@ -36,6 +36,13 @@ public:
 
     void setGeneratingTrafficStatus(bool state);
 
+    // Statistics
+    qreal totalSpecifiedBandwidth(NetworkModel::Layer layer);
+    qreal totalSendingBandwidth(NetworkModel::Layer layer);
+    qreal totalReceivingBandwidth(NetworkModel::Layer layer);
+    int totalPacketLost();
+
+
 public slots:
     // Connected to the UdpSender::dataChanged, so that an update of the UI occurs.
     // It will start sending Traffic when all udpSender are connected

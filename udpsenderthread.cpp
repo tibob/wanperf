@@ -183,8 +183,6 @@ void UdpSenderThread::run()
         t_msecDelta = t_msecNow - t_msecLast;
 
         t_packets2Send = t_msecDelta * t_ppmsec + t_packets2Send;
-        // Stats
-        t_statL4BytesSend += (int)t_packets2Send * (t_datagramSDULength + 8); // PDU = Header (8 Bytes) + SDU;
 
         // we never exceed the bandwidth: only send when packets2Send > 1
         while (t_packets2Send > 1) {
@@ -199,6 +197,9 @@ void UdpSenderThread::run()
             t_sendingCounter++;
 
             t_packets2Send--;
+
+            // Stats
+            t_statL4BytesSend += t_datagramSDULength + 8; // PDU = Header (8 Bytes) + SDU;
         }
 
         t_msecLast = t_msecNow;

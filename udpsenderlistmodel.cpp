@@ -71,7 +71,7 @@ QVariant UdpSenderListModel::data(const QModelIndex &index, int role) const
             return locale.toString(udpSenderList[index.row()]->receivingRate(m_BandwidthLayer) / m_BandwidthUnit,
                     'f', 2);
         case COL_PACKETLOST:
-            return udpSenderList[index.row()]->packetLost();
+            return locale.toString(udpSenderList[index.row()]->packetLost());
     }
     return QVariant();
 }
@@ -92,17 +92,17 @@ QVariant UdpSenderListModel::headerData(int section, Qt::Orientation orientation
             return "DSCP Value";
         case COL_BANDWIDTH:
         // FIXME: we need a Network Model for the whole application, not for every udpSender
-            return NetworkModel::layerShortName(m_BandwidthLayer) + " Bandwidth";
+            return NetworkModel::layerShortName(m_BandwidthLayer) + " specified Bandwidth";
         case COL_PORT:
             return "UDP Port";
         case COL_SIZE:
-            return NetworkModel::layerShortName(m_PDUSizeLayer) + " PDU Size";
+            return NetworkModel::layerShortName(m_PDUSizeLayer) + " specified PDU Size";
         case COL_STATUS:
             return "Connection status";
         case COL_SENDINGRATE:
-            return "Sending rate";
+            return "Sending bandwidth";
         case COL_RECEIVINGRATE:
-            return "Receiving rate";
+            return "Receiving bandwidth";
         case COL_PACKETLOST:
             return "Packets Lost";
 
@@ -282,6 +282,50 @@ void UdpSenderListModel::setGeneratingTrafficStatus(bool state)
     m_isGeneratingTraffic = state;
     // Refresh the Table
     emit dataChanged(index(0, 0), index(rowCount()-1, columnCount()-1));
+}
+
+qreal UdpSenderListModel::totalSpecifiedBandwidth(NetworkModel::Layer layer)
+{
+    qreal totalBandwidth = 0;
+    UdpSender *sender;
+    foreach (sender, udpSenderList) {
+        totalBandwidth += sender->specifiedBandwidth(layer);
+    }
+
+    return totalBandwidth;
+}
+
+qreal UdpSenderListModel::totalSendingBandwidth(NetworkModel::Layer layer)
+{
+    qreal totalBandwidth = 0;
+    UdpSender *sender;
+    foreach (sender, udpSenderList) {
+        totalBandwidth += sender->sendingRate(layer);
+    }
+
+    return totalBandwidth;
+}
+
+qreal UdpSenderListModel::totalReceivingBandwidth(NetworkModel::Layer layer)
+{
+    qreal totalBandwidth = 0;
+    UdpSender *sender;
+    foreach (sender, udpSenderList) {
+        totalBandwidth += sender->receivingRate(layer);
+    }
+
+    return totalBandwidth;
+}
+
+int UdpSenderListModel::totalPacketLost()
+{
+    int totalLost = 0;
+    UdpSender *sender;
+    foreach (sender, udpSenderList) {
+        totalLost += sender->packetLost();
+    }
+
+    return totalLost;
 }
 
 void UdpSenderListModel::connectionStatusChanged()

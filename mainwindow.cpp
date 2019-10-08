@@ -57,6 +57,11 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->udpSenderView->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
 
     connect(&wsClient, SIGNAL(statusChanged()), this, SLOT(wsClientStatusChanged()));
+
+    // Refresh global stats every second
+    QTimer *statsTimer = new QTimer(this);
+    connect(statsTimer, SIGNAL(timeout()), this, SLOT(updateGlobalStats()));
+    statsTimer->start(1000);
 }
 
 MainWindow::~MainWindow()
@@ -118,4 +123,15 @@ void MainWindow::on_bandwidthUnit_currentIndexChanged(int /* index */)
 void MainWindow::wsClientStatusChanged()
 {
     ui->lbStatus->setText(wsClient.statusString());
+}
+
+void MainWindow::updateGlobalStats()
+{
+    NetworkModel::Layer layer = static_cast<NetworkModel::Layer>(ui->bandwidthLayer->currentData().toInt());
+    qreal bandwidthUnit = ui->bandwidthUnit->currentData().toInt();
+
+    ui->specifiedBandwidth->setText(locale.toString(senderListModel->totalSpecifiedBandwidth(layer)/bandwidthUnit, 'f', 2));
+    ui->sendingBandwidth->setText(locale.toString(senderListModel->totalSendingBandwidth(layer)/bandwidthUnit, 'f', 2));
+    ui->receivingBandwidth->setText(locale.toString(senderListModel->totalReceivingBandwidth(layer)/bandwidthUnit, 'f', 2));
+    ui->packetLost->setText(locale.toString(senderListModel->totalPacketLost()));
 }

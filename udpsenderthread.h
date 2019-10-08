@@ -21,7 +21,7 @@ public:
     void stop();
 
 signals:
-    void statistics(qreal L4BandwidthSend, qreal L4BandwidthReceived, qreal packetsLost);
+    void statistics(qreal L4BandwidthSend, qreal L4BandwidthReceived, quint64 packetsLost);
 
 protected:
     void run() Q_DECL_OVERRIDE;

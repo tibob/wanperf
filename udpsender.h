@@ -55,7 +55,7 @@ signals:
 public slots:
     void remoteConnectedForSetUp();
     void udpEchoConnected(QUuid id);
-    void receiveStatistics(qreal L4BandwidthSend, qreal L4BandwidthReceived, qreal packetsLost);
+    void receiveStatistics(qreal L4BandwidthSend, qreal L4BandwidthReceived, quint64 packetsLost);
 
 private:
     // We have to keep track what parameters have been set for the udpSender

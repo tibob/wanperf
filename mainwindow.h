@@ -33,6 +33,8 @@ public slots:
 
     void wsClientStatusChanged();
 
+    void updateGlobalStats();
+
 private:
     Ui::MainWindow *ui;
     quint64 sendingCounter = 10000;
@@ -49,6 +51,10 @@ private:
     WsClient wsClient;
 
     UdpSenderListModel *senderListModel;
+
+    // use locale to display numbers correctly
+    QLocale locale;
+
 };
 
 #endif // MAINWINDOW_H

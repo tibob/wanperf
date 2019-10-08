@@ -19,7 +19,7 @@ UdpSender::UdpSender(QObject *parent) :
     setBandwidth(100000, NetworkModel::Layer3);
     setPduSize(1000, NetworkModel::Layer3);
 
-    connect(&m_thread, SIGNAL(statistics(qreal,qreal,qreal)), this, SLOT(receiveStatistics(qreal,qreal,qreal)));
+    connect(&m_thread, SIGNAL(statistics(qreal,qreal,quint64)), this, SLOT(receiveStatistics(qreal,qreal,quint64)));
 }
 
 void UdpSender::setNetworkModel(NetworkModel model)
@@ -212,7 +212,7 @@ void UdpSender::udpEchoConnected(QUuid id)
     emit connectionStatusChanged();
 }
 
-void UdpSender::receiveStatistics(qreal L4BandwidthSend, qreal L4BandwidthReceived, qreal packetsLost)
+void UdpSender::receiveStatistics(qreal L4BandwidthSend, qreal L4BandwidthReceived, quint64 packetsLost)
 {
     m_statL4BandwidthReceived = L4BandwidthReceived;
     m_statL4BandwidthSent = L4BandwidthSend;
