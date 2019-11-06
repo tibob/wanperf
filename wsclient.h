@@ -22,7 +22,7 @@ public:
         wscError
     };
 
-    explicit WsClient(QObject *parent = 0);
+    explicit WsClient(QObject *parent = nullptr);
     WsClient::wsClientStatus status();
     QString statusString();
     void removeUdpEcho(QUuid id);

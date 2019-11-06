@@ -146,13 +146,14 @@ void UdpSenderThread::run()
     quint64 t_CummuledLatency = 0;
 
     // Stats
-    qreal t_L4BandwidthSend;
+    qreal t_L4BandwidthSend;   
     qreal t_L4BandwidthReceived;
+    int t_ppsSent = 0;
+    int t_ppsReceived = 0;
     qint64 t_statLastTime = t_msecNow;
     qint64 t_statsTimeDelta = 0;
     quint64 t_statL4BytesReceived = 0;
     quint64 t_statL4BytesSend = 0;
-
 
     qint64 datagramSize;
 
@@ -200,6 +201,7 @@ void UdpSenderThread::run()
 
             // Stats
             t_statL4BytesSend += t_datagramSDULength + 8; // PDU = Header (8 Bytes) + SDU;
+            t_ppsSent++;
         }
 
         t_msecLast = t_msecNow;
@@ -227,6 +229,7 @@ void UdpSenderThread::run()
                     // This is the awaited Paket
                     t_awaitedCounter++;
                     t_PacketsReceived++;
+                    t_ppsReceived++;
                     t_CummuledLatency += latency;
                     t_statL4BytesReceived += t_datagramSDULength + 8; // PDU = Header (8 Bytes) + SDU
                 } else if (t_receivedCounter > t_awaitedCounter) {
@@ -236,7 +239,6 @@ void UdpSenderThread::run()
                     hexSending.setNum(t_sendingCounter, 16);
                     qDebug() << "Loss at " << t_receivedCounter << "Awaited " << t_awaitedCounter << " Current" << t_sendingCounter;
                     qDebug() << "Loss at " << hexReceived << "Awaited " << hexAwaited << " Current" << hexSending;
-
 
                     // One correct packet received, but Packet loss !
                     t_PacketsLost += t_receivedCounter - t_awaitedCounter;
@@ -269,11 +271,13 @@ void UdpSenderThread::run()
             t_L4BandwidthReceived = t_statL4BytesReceived * 8 / t_statsTimeDelta * 1000;
 
             // The signal will be send to the main thread, this is qt magic :-)
-            emit statistics(t_L4BandwidthSend, t_L4BandwidthReceived, t_PacketsLost);
+            emit statistics(t_L4BandwidthSend, t_L4BandwidthReceived, t_PacketsLost, t_ppsSent, t_ppsReceived);
 
             // Reset stat counter for next period
             t_statL4BytesSend = 0;
             t_statL4BytesReceived = 0;
+            t_ppsSent = 0;
+            t_ppsReceived = 0;
             t_statLastTime = t_msecNow;
         }
 
@@ -285,5 +289,5 @@ void UdpSenderThread::run()
 
     }
     // Clean Statistics when ending thread
-    emit statistics(0, 0, 0);
+    emit statistics(0, 0, 0, 0, 0);
 }

@@ -147,7 +147,7 @@ QString NetworkModel::layerName(NetworkModel::Layer layer)
     }
 
     // This should never be reached
-    Q_ASSERT("false");
+    Q_ASSERT(false);
     return "";
 }
 

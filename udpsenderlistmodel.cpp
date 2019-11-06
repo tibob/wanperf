@@ -65,10 +65,10 @@ QVariant UdpSenderListModel::data(const QModelIndex &index, int role) const
         case COL_STATUS:
             return udpSenderList[index.row()]->connectionStatus();
         case COL_SENDINGRATE:
-            return locale.toString(udpSenderList[index.row()]->sendingRate(m_BandwidthLayer) / m_BandwidthUnit,
+            return locale.toString(udpSenderList[index.row()]->sendingBandwidth(m_BandwidthLayer) / m_BandwidthUnit,
                     'f', 2);
         case COL_RECEIVINGRATE:
-            return locale.toString(udpSenderList[index.row()]->receivingRate(m_BandwidthLayer) / m_BandwidthUnit,
+            return locale.toString(udpSenderList[index.row()]->receivingBandwidth(m_BandwidthLayer) / m_BandwidthUnit,
                     'f', 2);
         case COL_PACKETLOST:
             return locale.toString(udpSenderList[index.row()]->packetLost());
@@ -300,7 +300,7 @@ qreal UdpSenderListModel::totalSendingBandwidth(NetworkModel::Layer layer)
     qreal totalBandwidth = 0;
     UdpSender *sender;
     foreach (sender, udpSenderList) {
-        totalBandwidth += sender->sendingRate(layer);
+        totalBandwidth += sender->sendingBandwidth(layer);
     }
 
     return totalBandwidth;
@@ -311,7 +311,7 @@ qreal UdpSenderListModel::totalReceivingBandwidth(NetworkModel::Layer layer)
     qreal totalBandwidth = 0;
     UdpSender *sender;
     foreach (sender, udpSenderList) {
-        totalBandwidth += sender->receivingRate(layer);
+        totalBandwidth += sender->receivingBandwidth(layer);
     }
 
     return totalBandwidth;
@@ -326,6 +326,28 @@ int UdpSenderListModel::totalPacketLost()
     }
 
     return totalLost;
+}
+
+int UdpSenderListModel::totalPpsSent()
+{
+    int pps = 0;
+    UdpSender *sender;
+    foreach (sender, udpSenderList) {
+        pps += sender->sendingPps();
+    }
+
+    return pps;
+}
+
+int UdpSenderListModel::totalPpsReceived()
+{
+    int pps = 0;
+    UdpSender *sender;
+    foreach (sender, udpSenderList) {
+        pps += sender->receivingPps();
+    }
+
+    return pps;
 }
 
 void UdpSenderListModel::connectionStatusChanged()

@@ -19,7 +19,7 @@ UdpSender::UdpSender(QObject *parent) :
     setBandwidth(100000, NetworkModel::Layer3);
     setPduSize(1000, NetworkModel::Layer3);
 
-    connect(&m_thread, SIGNAL(statistics(qreal,qreal,quint64)), this, SLOT(receiveStatistics(qreal,qreal,quint64)));
+    connect(&m_thread, SIGNAL(statistics(qreal,qreal,quint64,int,int)), this, SLOT(receiveStatistics(qreal,qreal,quint64,int,int)));
 }
 
 void UdpSender::setNetworkModel(NetworkModel model)
@@ -157,14 +157,24 @@ void UdpSender::stopTraffic()
     emit connectionStatusChanged();
 }
 
-qreal UdpSender::sendingRate(NetworkModel::Layer bandwidthLayer)
+qreal UdpSender::sendingBandwidth(NetworkModel::Layer bandwidthLayer)
 {
     return m_networkModel.bandwidth(m_statL4BandwidthSent, NetworkModel::Layer4, m_pduSize, m_pduSizeLayer, bandwidthLayer);
 }
 
-qreal UdpSender::receivingRate(NetworkModel::Layer bandwidthLayer)
+qreal UdpSender::receivingBandwidth(NetworkModel::Layer bandwidthLayer)
 {
     return m_networkModel.bandwidth(m_statL4BandwidthReceived, NetworkModel::Layer4, m_pduSize, m_pduSizeLayer, bandwidthLayer);
+}
+
+int UdpSender::sendingPps()
+{
+    return m_sentPps;
+}
+
+int UdpSender::receivingPps()
+{
+    return m_receivedPps;
 }
 
 int UdpSender::packetLost()
@@ -183,12 +193,10 @@ QString UdpSender::connectionStatus()
         return "Flow connected";
     case sSendingTraffic:
         return "Sending Traffic";
-    case sError:
+//    case sError:
     default:
         return "Error";
     }
-
-    return "no defined";
 }
 
 bool UdpSender::isConnected()
@@ -212,9 +220,11 @@ void UdpSender::udpEchoConnected(QUuid id)
     emit connectionStatusChanged();
 }
 
-void UdpSender::receiveStatistics(qreal L4BandwidthSend, qreal L4BandwidthReceived, quint64 packetsLost)
+void UdpSender::receiveStatistics(qreal L4BandwidthSend, qreal L4BandwidthReceived, quint64 packetsLost, int ppsSent, int ppsReceived)
 {
     m_statL4BandwidthReceived = L4BandwidthReceived;
     m_statL4BandwidthSent = L4BandwidthSend;
     m_PacketsLost = packetsLost;
+    m_sentPps = ppsSent;
+    m_receivedPps = ppsReceived;
 }

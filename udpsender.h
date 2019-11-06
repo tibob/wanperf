@@ -14,7 +14,7 @@ class UdpSender : public QObject
 {
     Q_OBJECT
 public:
-    explicit UdpSender(QObject *parent = 0);
+    explicit UdpSender(QObject *parent = nullptr);
 //    Packet Length
     void setNetworkModel(NetworkModel model);
     NetworkModel networkModel();
@@ -39,8 +39,10 @@ public:
     void stopTraffic();
 
     /***** Statistics *****/
-    qreal sendingRate(NetworkModel::Layer bandwidthLayer);
-    qreal receivingRate(NetworkModel::Layer bandwidthLayer);
+    qreal sendingBandwidth(NetworkModel::Layer bandwidthLayer);
+    qreal receivingBandwidth(NetworkModel::Layer bandwidthLayer);
+    int sendingPps();
+    int receivingPps();
     int packetLost();
 
     /**** Communication with remote *****/
@@ -55,7 +57,7 @@ signals:
 public slots:
     void remoteConnectedForSetUp();
     void udpEchoConnected(QUuid id);
-    void receiveStatistics(qreal L4BandwidthSend, qreal L4BandwidthReceived, quint64 packetsLost);
+    void receiveStatistics(qreal L4BandwidthSend, qreal L4BandwidthReceived, quint64 packetsLost, int ppsSent, int ppsReceived);
 
 private:
     // We have to keep track what parameters have been set for the udpSender
@@ -84,7 +86,7 @@ private:
     QUuid m_id;
 
     // Communication with remote
-    WsClient *m_wsClient = NULL;
+    WsClient *m_wsClient = nullptr;
     enum status {
         sRemoteDisconnected,
         sConnectingUdpEcho,
@@ -100,6 +102,8 @@ private:
     quint64 m_PacketsLost = 0;
     qreal m_statL4BandwidthSent = 0;
     qreal m_statL4BandwidthReceived = 0;
+    int m_sentPps = 0;
+    int m_receivedPps = 0;
 
     QString m_Name;
 };

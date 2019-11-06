@@ -1,3 +1,5 @@
+Networking should noch anymore work with loopback but with destination (DNS-Resolution, IPv4 / IPv6?)
+
 Stats:
 - pps
 - WAN extrapolation

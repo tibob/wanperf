@@ -134,4 +134,6 @@ void MainWindow::updateGlobalStats()
     ui->sendingBandwidth->setText(locale.toString(senderListModel->totalSendingBandwidth(layer)/bandwidthUnit, 'f', 2));
     ui->receivingBandwidth->setText(locale.toString(senderListModel->totalReceivingBandwidth(layer)/bandwidthUnit, 'f', 2));
     ui->packetLost->setText(locale.toString(senderListModel->totalPacketLost()));
+    ui->sendingPps->setText(locale.toString(senderListModel->totalPpsSent()));
+    ui->receivingPps->setText(locale.toString(senderListModel->totalPpsReceived()));
 }

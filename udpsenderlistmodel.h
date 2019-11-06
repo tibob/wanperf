@@ -12,19 +12,19 @@ class UdpSenderListModel : public QAbstractTableModel
     Q_OBJECT
 
 public:
-    explicit UdpSenderListModel(QObject *parent = 0);
+    explicit UdpSenderListModel(QObject *parent = nullptr);
 
     // Basic functionality:
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
 
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
-    QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
+    QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
     bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
     Qt::ItemFlags flags(const QModelIndex &index) const override;
 
-    bool insertRows(int position, int rows, const QModelIndex &index = QModelIndex());
-    bool removeRows(int position, int rows, const QModelIndex &index = QModelIndex());
+    bool insertRows(int position, int rows, const QModelIndex &index = QModelIndex()) override;
+    bool removeRows(int position, int rows, const QModelIndex &index = QModelIndex()) override;
 
     void setPDUSizeLayer(NetworkModel::Layer layer);
     void setBandwidthLayer(NetworkModel::Layer layer);
@@ -41,7 +41,8 @@ public:
     qreal totalSendingBandwidth(NetworkModel::Layer layer);
     qreal totalReceivingBandwidth(NetworkModel::Layer layer);
     int totalPacketLost();
-
+    int totalPpsSent();
+    int totalPpsReceived();
 
 public slots:
     // Connected to the UdpSender::dataChanged, so that an update of the UI occurs.
@@ -76,7 +77,7 @@ private:
     int m_BandwidthUnit;
 
     // Communication with remote
-    WsClient *m_wsClient = NULL;
+    WsClient *m_wsClient = nullptr;
 
     bool m_isGeneratingTraffic = false;
 };
