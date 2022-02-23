@@ -284,6 +284,14 @@ void UdpSenderListModel::setGeneratingTrafficStatus(bool state)
     emit dataChanged(index(0, 0), index(rowCount()-1, columnCount()-1));
 }
 
+void UdpSenderListModel::setDestinationIP(QHostAddress destinationIP)
+{
+    UdpSender *sender;
+    foreach (sender, udpSenderList) {
+        sender->setDestination(destinationIP);
+    }
+}
+
 qreal UdpSenderListModel::totalSpecifiedBandwidth(NetworkModel::Layer layer)
 {
     qreal totalBandwidth = 0;

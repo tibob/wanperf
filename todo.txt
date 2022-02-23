@@ -1,7 +1,7 @@
 Networking should noch anymore work with loopback but with destination (DNS-Resolution, IPv4 / IPv6?)
 
 Stats:
-- pps
+- pps for each thread
 - WAN extrapolation
 - wanperfd stats (8 Bytes are free in the UDP header)
 

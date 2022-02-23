@@ -75,7 +75,7 @@ private:
     // Packets per milisecond to send. We work with miliseconds to reduce calculation in the sending algotithm.
     qreal m_ppmsec;
 
-    QHostAddress destination;
+    QHostAddress m_destination;
 
     UdpSenderThread m_thread;
 
