@@ -34,7 +34,9 @@ NetworkModel UdpSender::networkModel()
 
 void UdpSender::setDestination(QHostAddress address)
 {
-    destination = address;
+    m_destination = address;
+
+    m_thread.setDestination(address);
 }
 
 void UdpSender::setPort(int udpPort)

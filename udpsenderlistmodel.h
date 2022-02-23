@@ -35,6 +35,7 @@ public:
     void stopAllSender();
 
     void setGeneratingTrafficStatus(bool state);
+    void setDestinationIP(QHostAddress destinationIP);
 
     // Statistics
     qreal totalSpecifiedBandwidth(NetworkModel::Layer layer);

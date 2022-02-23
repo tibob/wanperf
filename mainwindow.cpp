@@ -24,10 +24,10 @@ MainWindow::MainWindow(QWidget *parent) :
     senderListModel->setWsClient(&wsClient);
 
     // Bandwidth should be an int and >= 0
-    QIntValidator *portValidator = new QIntValidator(ui->udpPort);
+    QIntValidator *portValidator = new QIntValidator(ui->destinationPort);
     portValidator->setBottom(0);
     portValidator->setTop(65535);
-    ui->udpPort->setValidator(portValidator);
+    ui->destinationPort->setValidator(portValidator);
 
     // Initialise QtCombos
     ui->bandwidthLayer->addItem("Layer 1", QVariant(NetworkModel::Layer1));
@@ -37,9 +37,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->bandwidthLayer->setCurrentIndex(2);
 
 
-    ui->bandwidthUnit->addItem("bit/s", QVariant((int) 1));
-    ui->bandwidthUnit->addItem("Kbit/s", QVariant((int) 1000));
-    ui->bandwidthUnit->addItem("Mbit/s", QVariant((int) 1000000));
+    ui->bandwidthUnit->addItem("bit/s", QVariant(static_cast<int>(1)));
+    ui->bandwidthUnit->addItem("Kbit/s", QVariant(static_cast<int>(1000)));
+    ui->bandwidthUnit->addItem("Mbit/s", QVariant(static_cast<int>(1000000)));
     ui->bandwidthUnit->setCurrentIndex(1);
 
 
@@ -78,8 +78,18 @@ void MainWindow::on_btnConnect_clicked()
 {
     senderListModel->stopAllSender();
 
-    senderListModel->setGeneratingTrafficStatus(true);
+    QHostAddress destinationIP = QHostAddress(ui->destinationHost->text());
 
+    if (destinationIP.protocol() != QAbstractSocket::IPv4Protocol) {
+        // we only work with IPv4
+        ui->lbStatus->setText("Not an IPv4 Address");
+    }
+
+    ui->destinationHost->setEnabled(false);
+    ui->destinationPort->setEnabled(false);
+
+    senderListModel->setDestinationIP(destinationIP);
+    senderListModel->setGeneratingTrafficStatus(true);
     wsClient.connectRemoteToSetUp(ui->destinationHost->text());
 }
 
@@ -92,6 +102,10 @@ void MainWindow::on_btnDisconnect_clicked()
     wsClient.connectRemoteToClose(ui->destinationHost->text());
 
     senderListModel->setGeneratingTrafficStatus(false);
+
+    ui->destinationHost->setEnabled(true);
+    ui->destinationPort->setEnabled(true);
+
 }
 
 void MainWindow::on_insertUdpSender_clicked()
