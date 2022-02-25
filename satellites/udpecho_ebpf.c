@@ -4,14 +4,23 @@
 #include <linux/in.h>
 #include <linux/udp.h>
 
-
 int udpecho (struct __sk_buff * skb) {
     void *data = (void *)(long)skb->data;
     void *data_end = (void *)(long)skb->data_end;
+    u32 header_length = sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct udphdr);
   
-    /* Check if our frame is big enougth to include an UDP Datagram. If not, pass to the next filter */
-    if (data + sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct udphdr) > data_end)
-        return TC_ACT_OK;
+    /* Check if our frame is big enought to include an UDP Datagram. If not, pass to the next filter */
+   if (data + header_length > data_end) {
+       /* perhaps the stored data is to short. Pull the data we need */
+        bpf_skb_pull_data(skb, header_length);
+        data = (void *)(long)skb->data;
+        data_end = (void *)(long)skb->data_end;
+        
+        /* Stil to small? This frame is not for us */
+        if (data + header_length > data_end) {
+            return TC_ACT_OK;
+        }
+   }
     
     /* Access the different Layer headers */
     struct ethhdr *ethernet =  data;
