@@ -28,26 +28,6 @@
          </property>
         </widget>
        </item>
-       <item row="0" column="1">
-        <widget class="QLineEdit" name="destinationHost">
-         <property name="text">
-          <string>localhost</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="2">
-        <widget class="QLineEdit" name="destinationPort">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="text">
-          <string>4212</string>
-         </property>
-        </widget>
-       </item>
        <item row="0" column="3">
         <spacer name="horizontalSpacer_7">
          <property name="orientation">
@@ -77,23 +57,23 @@
           </spacer>
          </item>
          <item row="0" column="1">
-          <widget class="QPushButton" name="btnConnect">
+          <widget class="QPushButton" name="btnGenerate">
            <property name="text">
-            <string>Connect and generate traffic</string>
+            <string>Generate traffic</string>
            </property>
           </widget>
          </item>
          <item row="1" column="1">
-          <widget class="QPushButton" name="btnDisconnect">
+          <widget class="QPushButton" name="btnStop">
            <property name="text">
-            <string>Stop traffic and disconnect</string>
+            <string>Stop traffic</string>
            </property>
           </widget>
          </item>
          <item row="2" column="0" colspan="2">
           <widget class="QLabel" name="lbStatus">
            <property name="text">
-            <string>Not connected</string>
+            <string>Idle</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -144,6 +124,13 @@
        </item>
        <item row="3" column="2">
         <widget class="QComboBox" name="sizeLayer"/>
+       </item>
+       <item row="0" column="2">
+        <widget class="QLineEdit" name="destinationHost">
+         <property name="text">
+          <string>10.0.3.24</string>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>

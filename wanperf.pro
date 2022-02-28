@@ -18,14 +18,12 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     udpsender.cpp \
     networkmodel.cpp \
-    wsclient.cpp \
     udpsenderlistmodel.cpp \
     udpsenderthread.cpp
 
 HEADERS  += mainwindow.h \
     udpsender.h \
     networkmodel.h \
-    wsclient.h \
     udpsenderlistmodel.h \
     udpsenderthread.h
 

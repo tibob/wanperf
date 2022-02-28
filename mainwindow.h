@@ -6,7 +6,6 @@
 #include <QAbstractItemModel>
 
 #include "udpsender.h"
-#include "wsclient.h"
 #include "udpsenderlistmodel.h"
 
 namespace Ui {
@@ -28,10 +27,8 @@ public slots:
     void on_bandwidthLayer_currentIndexChanged(int index);
     void on_bandwidthUnit_currentIndexChanged(int index);
 
-    void on_btnConnect_clicked();
-    void on_btnDisconnect_clicked();
-
-    void wsClientStatusChanged();
+    void on_btnGenerate_clicked();
+    void on_btnStop_clicked();
 
     void updateGlobalStats();
 
@@ -47,8 +44,6 @@ private:
         COL_DSCP = 3,
         COL_SIZE = 4
     };
-
-    WsClient wsClient;
 
     UdpSenderListModel *senderListModel;
 

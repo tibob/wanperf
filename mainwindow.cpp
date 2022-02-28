@@ -18,16 +18,9 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    // This come first, as it is colled fromn signals when setting up the drop Down Menus
+    // This come first, as it is called from signals when setting up the drop Down Menus
     senderListModel = new UdpSenderListModel();
     ui->udpSenderView->setModel(senderListModel);
-    senderListModel->setWsClient(&wsClient);
-
-    // Bandwidth should be an int and >= 0
-    QIntValidator *portValidator = new QIntValidator(ui->destinationPort);
-    portValidator->setBottom(0);
-    portValidator->setTop(65535);
-    ui->destinationPort->setValidator(portValidator);
 
     // Initialise QtCombos
     ui->bandwidthLayer->addItem("Layer 1", QVariant(NetworkModel::Layer1));
@@ -56,8 +49,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->udpSenderView->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     ui->udpSenderView->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
 
-    connect(&wsClient, SIGNAL(statusChanged()), this, SLOT(wsClientStatusChanged()));
-
     // Refresh global stats every second
     QTimer *statsTimer = new QTimer(this);
     connect(statsTimer, SIGNAL(timeout()), this, SLOT(updateGlobalStats()));
@@ -70,11 +61,11 @@ MainWindow::~MainWindow()
 }
 
 /*!
- * \brief MainWindow::on_btnConnect_clicked
+ * \brief MainWindow::on_btnGenerate_clicked
  *
  * Connects to the remote device and initialise the udp responder
  */
-void MainWindow::on_btnConnect_clicked()
+void MainWindow::on_btnGenerate_clicked()
 {
     senderListModel->stopAllSender();
 
@@ -86,26 +77,19 @@ void MainWindow::on_btnConnect_clicked()
     }
 
     ui->destinationHost->setEnabled(false);
-    ui->destinationPort->setEnabled(false);
 
     senderListModel->setDestinationIP(destinationIP);
-    senderListModel->setGeneratingTrafficStatus(true);
-    wsClient.connectRemoteToSetUp(ui->destinationHost->text());
+    senderListModel->generateTraffic();
 }
 
-void MainWindow::on_btnDisconnect_clicked()
+void MainWindow::on_btnStop_clicked()
 {
-    ui->lbStatus->setText("Stopping...");
 
     senderListModel->stopAllSender();
 
-    wsClient.connectRemoteToClose(ui->destinationHost->text());
-
-    senderListModel->setGeneratingTrafficStatus(false);
+    ui->lbStatus->setText("Idle");
 
     ui->destinationHost->setEnabled(true);
-    ui->destinationPort->setEnabled(true);
-
 }
 
 void MainWindow::on_insertUdpSender_clicked()
@@ -132,11 +116,6 @@ void MainWindow::on_bandwidthLayer_currentIndexChanged(int /* index */)
 void MainWindow::on_bandwidthUnit_currentIndexChanged(int /* index */)
 {
     senderListModel->setBandwidthUnit(ui->bandwidthUnit->currentData().toInt());
-}
-
-void MainWindow::wsClientStatusChanged()
-{
-    ui->lbStatus->setText(wsClient.statusString());
 }
 
 void MainWindow::updateGlobalStats()

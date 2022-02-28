@@ -30,11 +30,9 @@ public:
     void setBandwidthLayer(NetworkModel::Layer layer);
     void setBandwidthUnit(int bandwidthUnit);
 
-    void setWsClient(WsClient *wsClient);
-
+    void generateTraffic();
     void stopAllSender();
 
-    void setGeneratingTrafficStatus(bool state);
     void setDestinationIP(QHostAddress destinationIP);
 
     // Statistics
@@ -46,10 +44,6 @@ public:
     int totalPpsReceived();
 
 public slots:
-    // Connected to the UdpSender::dataChanged, so that an update of the UI occurs.
-    // It will start sending Traffic when all udpSender are connected
-    void connectionStatusChanged();
-
     void updateStats();
 
 private:
@@ -61,7 +55,6 @@ private:
         COL_BANDWIDTH,
         COL_DSCP,
         COL_SIZE,
-        COL_STATUS,
         /* Statistics */
         COL_SENDINGRATE,
         COL_RECEIVINGRATE,
@@ -76,9 +69,6 @@ private:
     NetworkModel::Layer m_PDUSizeLayer;
     NetworkModel::Layer m_BandwidthLayer;
     int m_BandwidthUnit;
-
-    // Communication with remote
-    WsClient *m_wsClient = nullptr;
 
     bool m_isGeneratingTraffic = false;
 };

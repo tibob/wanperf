@@ -7,7 +7,6 @@
 #include <QUuid>
 
 #include "networkmodel.h"
-#include "wsclient.h"
 #include "udpsenderthread.h"
 
 class UdpSender : public QObject
@@ -28,7 +27,6 @@ public:
     void setName ( QString newName);
     QString name();
     QUuid id();
-    void setWsClient(WsClient *wsClient);
 
     void setBandwidth(qreal bandwidth, NetworkModel::Layer bandwidthLayer);
     qreal specifiedBandwidth(NetworkModel::Layer bandwidthLayer);
@@ -45,18 +43,10 @@ public:
     int receivingPps();
     int packetLost();
 
-    /**** Communication with remote *****/
-    QString connectionStatus();
-    bool isConnected();
-    void deleteRemoveUdpEcho();
-
 signals:
-    void connectionStatusChanged();
     void statsChanged();
 
 public slots:
-    void remoteConnectedForSetUp();
-    void udpEchoConnected(QUuid id);
     void receiveStatistics(qreal L4BandwidthSend, qreal L4BandwidthReceived, quint64 packetsLost, int ppsSent, int ppsReceived);
 
 private:
@@ -84,17 +74,6 @@ private:
 
     // Unique identifier
     QUuid m_id;
-
-    // Communication with remote
-    WsClient *m_wsClient = nullptr;
-    enum status {
-        sRemoteDisconnected,
-        sConnectingUdpEcho,
-        sUdpEchoConnected,
-        sSendingTraffic,
-        sError
-    };
-    UdpSender::status m_status = UdpSender::sRemoteDisconnected;
 
     NetworkModel m_networkModel;
 
