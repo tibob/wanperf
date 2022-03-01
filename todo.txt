@@ -15,6 +15,7 @@ Multithreading:
 
 
 Whishlist
+- Use QHostInfo to do a DNS-Lookup on destinationHost
 - dynamic port numbers per flow (would be easier for the user, only the expert needs to set the udp port?
 - Differentiate IPv4 from IPv6 when calculating the UDP-bandwidth to be send
 - Pause one of the UdpEcho
@@ -38,3 +39,9 @@ Whishlist
 - DSCP
  o Have Qt change their code or inherit QUdpSocket
  o DSCP under Windows
+
+
+############## udpecho #############
+- Choose interface from the command line
+- Choose port (range?) from the command line
+- Address compilation warnings

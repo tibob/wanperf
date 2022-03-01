@@ -62,8 +62,6 @@ QVariant UdpSenderListModel::data(const QModelIndex &index, int role) const
             return udpSenderList[index.row()]->port();
         case COL_SIZE:
             return locale.toString(udpSenderList[index.row()]->specifiedPduSize(m_PDUSizeLayer));
-        case COL_STATUS:
-            return udpSenderList[index.row()]->connectionStatus();
         case COL_SENDINGRATE:
             return locale.toString(udpSenderList[index.row()]->sendingBandwidth(m_BandwidthLayer) / m_BandwidthUnit,
                     'f', 2);
@@ -97,8 +95,6 @@ QVariant UdpSenderListModel::headerData(int section, Qt::Orientation orientation
             return "UDP Port";
         case COL_SIZE:
             return NetworkModel::layerShortName(m_PDUSizeLayer) + " specified PDU Size";
-        case COL_STATUS:
-            return "Connection status";
         case COL_SENDINGRATE:
             return "Sending bandwidth";
         case COL_RECEIVINGRATE:
@@ -162,8 +158,7 @@ Qt::ItemFlags UdpSenderListModel::flags(const QModelIndex &index) const
         return Qt::ItemIsEnabled;
 
     // These columns are not editable
-    if (index.column() == COL_STATUS
-            || index.column() == COL_SENDINGRATE
+    if (index.column() == COL_SENDINGRATE
             || index.column() == COL_RECEIVINGRATE
             || index.column() == COL_PACKETLOST) {
         return Qt::ItemIsSelectable | Qt::ItemIsEnabled;
@@ -191,15 +186,11 @@ bool UdpSenderListModel::insertRows(int position, int rows, const QModelIndex &/
     for (int row = 0; row < rows; row++) {
         sender = new UdpSender();
 
-        sender->setWsClient(m_wsClient);
         udpSenderList.insert(position, sender);
         /* Be sure that the sender has its Bandwidth stored in the same Layer als the UI
          * This is to avoid the Bandwidth to change when the PDU Size is changed *
          */
         sender->setBandwidth(sender->specifiedBandwidth(m_BandwidthLayer), m_BandwidthLayer);
-
-        // Permit the underlying data to tell it changed.
-        connect(sender, SIGNAL(connectionStatusChanged()), this, SLOT(connectionStatusChanged()));
     }
 
     endInsertRows();
@@ -258,30 +249,27 @@ void UdpSenderListModel::setBandwidthUnit(int bandwidthUnit)
     emit dataChanged(index(0, 0), index(rowCount()-1, columnCount()-1));
 }
 
-void UdpSenderListModel::setWsClient(WsClient *wsClient)
-{
-    m_wsClient = wsClient;
-
-    UdpSender *sender;
-    foreach (sender, udpSenderList) {
-        sender->setWsClient(wsClient);
-    }
-
-}
-
 void UdpSenderListModel::stopAllSender()
 {
     UdpSender *sender;
     foreach (sender, udpSenderList) {
         sender->stopTraffic();
     }
+    m_isGeneratingTraffic = false;
 }
 
-void UdpSenderListModel::setGeneratingTrafficStatus(bool state)
+void UdpSenderListModel::generateTraffic()
 {
-    m_isGeneratingTraffic = state;
+    UdpSender *sender;
+
     // Refresh the Table
     emit dataChanged(index(0, 0), index(rowCount()-1, columnCount()-1));
+
+    /* Starts to generate Traffic */
+    foreach (sender, udpSenderList) {
+        sender->startTraffic();
+    }
+    m_isGeneratingTraffic = true;
 }
 
 void UdpSenderListModel::setDestinationIP(QHostAddress destinationIP)
@@ -356,35 +344,6 @@ int UdpSenderListModel::totalPpsReceived()
     }
 
     return pps;
-}
-
-void UdpSenderListModel::connectionStatusChanged()
-{
-    UdpSender *udpSender;
-
-    // we neet to know which Line is to update
-    udpSender = qobject_cast<UdpSender *>(sender());
-
-    int senderIndex = udpSenderList.indexOf(udpSender);
-
-    // One of the UdpSender has a new connection status, tell someting in the column changed.
-    emit dataChanged(index(senderIndex, COL_STATUS), index(senderIndex, COL_STATUS));
-
-    if (m_wsClient->status() == WsClient::wscConnectedForSetUp) {
-        /* starts traffic only if all UdpSender are connected */
-        bool allConnected = true;
-        foreach (udpSender, udpSenderList) {
-            allConnected = allConnected && udpSender->isConnected();
-        }
-        if (allConnected == true) {
-            m_wsClient->allUdpEchoConnected();
-
-            /* Starts to generate Traffic */
-            foreach (udpSender, udpSenderList) {
-                udpSender->startTraffic();
-            }
-        }
-    }    
 }
 
 void UdpSenderListModel::updateStats()

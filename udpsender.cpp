@@ -85,15 +85,6 @@ QUuid UdpSender::id()
     return m_id;
 }
 
-void UdpSender::setWsClient(WsClient *wsClient)
-{
-    m_wsClient = wsClient;
-
-    // Receive messages from Remote
-    connect(wsClient, SIGNAL(remoteConnectedForSetUp()), this, SLOT(remoteConnectedForSetUp()));
-    connect(wsClient, SIGNAL(udpEchoConnected(QUuid)), this, SLOT(udpEchoConnected(QUuid)));
-}
-
 void UdpSender::setBandwidth(qreal bandwidth, NetworkModel::Layer bandwidthLayer)
 {
     m_bandwidth = bandwidth;
@@ -146,17 +137,11 @@ void UdpSender::startTraffic()
         return;
     }
     m_thread.start();
-
-    m_status = UdpSender::sSendingTraffic;
-    emit connectionStatusChanged();
 }
 
 void UdpSender::stopTraffic()
 {
     m_thread.stop();
-
-    m_status = UdpSender::sRemoteDisconnected;
-    emit connectionStatusChanged();
 }
 
 qreal UdpSender::sendingBandwidth(NetworkModel::Layer bandwidthLayer)
@@ -182,44 +167,6 @@ int UdpSender::receivingPps()
 int UdpSender::packetLost()
 {
     return m_PacketsLost;
-}
-
-QString UdpSender::connectionStatus()
-{
-    switch (m_status){
-    case sRemoteDisconnected:
-        return "Remote disconected";
-    case sConnectingUdpEcho:
-        return "Connecting Flow";
-    case sUdpEchoConnected:
-        return "Flow connected";
-    case sSendingTraffic:
-        return "Sending Traffic";
-//    case sError:
-    default:
-        return "Error";
-    }
-}
-
-bool UdpSender::isConnected()
-{
-    return m_status == sUdpEchoConnected;
-}
-
-void UdpSender::remoteConnectedForSetUp()
-{
-    m_wsClient->connectUdpEcho(m_id, m_udpPort, mTos);
-    m_status = UdpSender::sConnectingUdpEcho;
-    emit connectionStatusChanged();
-}
-
-void UdpSender::udpEchoConnected(QUuid id)
-{
-    if (id != m_id) /* The message is not for this UdpSender */
-        return;
-
-    m_status = UdpSender::sUdpEchoConnected;
-    emit connectionStatusChanged();
 }
 
 void UdpSender::receiveStatistics(qreal L4BandwidthSend, qreal L4BandwidthReceived, quint64 packetsLost, int ppsSent, int ppsReceived)
