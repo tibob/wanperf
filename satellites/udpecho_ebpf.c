@@ -9,40 +9,50 @@ int udpecho (struct __sk_buff * skb) {
     void *data_end = (void *)(long)skb->data_end;
     u32 header_length = sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct udphdr);
   
-    /* Check if our frame is big enought to include an UDP Datagram. If not, pass to the next filter */
+    /* Check if our frame is big enough to include an UDP datagram. If not, pass to the next filter */
    if (data + header_length > data_end) {
        /* perhaps the stored data is to short. Pull the data we need */
         bpf_skb_pull_data(skb, header_length);
         data = (void *)(long)skb->data;
         data_end = (void *)(long)skb->data_end;
         
-        /* Stil to small? This frame is not for us */
+        /* Still too small? This frame is not for us */
         if (data + header_length > data_end) {
             return TC_ACT_OK;
         }
    }
     
-    /* Access the different Layer headers */
+    /* Access the different layer headers */
     struct ethhdr *ethernet =  data;
     struct iphdr  *ip  = (data + sizeof(struct ethhdr));
     struct udphdr *udp = (data + sizeof(struct ethhdr) + sizeof(struct iphdr));   
       
-    /* Is this an IP Packet? */
+    /* Is this an IP packet? */
     if (ethernet->h_proto != __constant_htons(ETH_P_IP))
         return TC_ACT_OK;
     
-    /* Is this an UDP Datagram? */
+    /* Is this an UDP datagram? */
     if (ip->protocol != IPPROTO_UDP)
         return TC_ACT_OK;
 
-    /* Is this an UDP Port we want to respond to? */
-/*    if (*dport != DPORT) */
-/*    if (udp->dest != 12345)
-        return TC_ACT_UNSPEC; */
-
-/* Filter on my source/destination IP Address, so I do not repond to everyone */
+#ifdef PORT
+    /* Is this an UDP port we want to respond to? */
+    if (udp->dest != bpf_htons(PORT))
+        return TC_ACT_OK;
+#endif
     
-    /* Now prepare the outgoing frame. No checksum recompute is needed, as the bytes in the headers do noch change, just the order */
+#ifdef PORTMIN
+    /* Is this a port range we want to respond to? */
+    int port = bpf_ntohs(udp->dest);
+    if (port < PORTMIN || port > PORTMAX)
+        return TC_ACT_OK;
+#endif
+
+    /* We are done with our checks.
+     * Now prepare the outgoing frame.
+     * No checksum recompute is needed, as the bytes in the headers do not
+     * change, just their order.
+     */
     
     /* Swap the MAC adresses */
     u8 tmp_mac[ETH_ALEN];
