@@ -69,7 +69,7 @@ private:
 
     UdpSenderThread m_thread;
 
-    int m_udpPort = 4212;
+    int m_udpPort = 7;
     quint8 mTos = 0;
 
     // Unique identifier

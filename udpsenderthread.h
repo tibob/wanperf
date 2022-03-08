@@ -36,7 +36,7 @@ private:
     // Packets per milisecond to send. We work with miliseconds to reduce calculation in the sending algotithm.
     qreal m_ppmsec = 0;
     // Destination Port
-    int m_udpPort = 4212;
+    quint16 m_udpPort = 7;
     // Destination Address
     QHostAddress m_destination;
     // Type of Service
@@ -44,6 +44,7 @@ private:
 
     /* Locker when accessing Parameter and Statistics */
     QMutex m_Mutex;
+    // volatile = tell the computer this variable may change at any time
     volatile bool m_stopped = false;
 
 };

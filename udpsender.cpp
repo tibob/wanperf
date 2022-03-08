@@ -16,8 +16,8 @@ UdpSender::UdpSender(QObject *parent) :
     setNetworkModel(NetworkModel());
 
     // Initialise PDU Size & Bandwidth to some Value
-    setBandwidth(100000, NetworkModel::Layer3);
-    setPduSize(1000, NetworkModel::Layer3);
+    setBandwidth(100000000, NetworkModel::Layer2);
+    setPduSize(512, NetworkModel::Layer2);
 
     connect(&m_thread, SIGNAL(statistics(qreal,qreal,quint64,int,int)), this, SLOT(receiveStatistics(qreal,qreal,quint64,int,int)));
 }

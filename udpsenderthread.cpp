@@ -1,14 +1,14 @@
-#include "udpsenderthread.h"
+﻿#include "udpsenderthread.h"
 #include <QDateTime>
 #include <QtEndian>
+#include <QtGlobal>
 
-/* Status for myself:
- * - One Thread per UDPSender (Rename to UDPSenderWorker).
- * - The thread is started when setting up the satellite.
- * - We create the socket in the UDPSenderWorker
- * - Communication with the main thread with signal & slots
- * - The socket will be created an maitaned in pure C, because we don't want signals & slots here. Warning: we have a portability problem.
-*/
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/udp.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <poll.h>
 
 UdpSenderThread::UdpSenderThread()
 {
@@ -88,7 +88,6 @@ bool UdpSenderThread::setDestination(QHostAddress address)
 void UdpSenderThread::stop()
 {
     if (isRunning()) {
-        // We don't change ppmsec while the Thread ist running. First Stop the thread
         m_Mutex.lock();
         m_stopped = true;
         m_Mutex.unlock();
@@ -102,192 +101,292 @@ void UdpSenderThread::stop()
  * I want this to be very fast, so we will read the parameters once with a Mutex.
  * If the parameter are changed, the main process has to restart the thread.
  *
-*/
+ * All thread-internal variables are prefixed with t_
+ * All shared variables (members of the object) are prefixed with m_
+ *
+ * This is a quite monolithic Thread. I avoided function calls in order to save
+ * CPU cycles. I'm not sure this is a good idea, the code is difficult to read.
+ *
+ * The stats are sent with an emited signal, which is thread-safe.
+ *
+ * FIXME: this is Linux-Only code.
+ * Hints for Sckets with Linux & Windows:
+ * https://handsonnetworkprogramming.com/articles/socket-error-message-text/
+ */
+
 void UdpSenderThread::run()
 {
-    QUdpSocket t_udpSocket;
+    /********************************************************************
+    * Create a Socket and bind it
+    *********************************************************************/
+    int t_udpSocket = socket(AF_INET, SOCK_DGRAM, 0);
+    if (t_udpSocket < 0) {
+        qDebug() << "UdpSenderThread::run: could not open the socket";
+    }
 
-    // NOTE: This is a workaround so that DSCP-Values are used => force IPv4
-    // Qt curentliy does not support DSCP-Values in IPv6 nor when we are using QAbstractSocket::AnyIPProtocol
-    // In the future: Toggle between IPv4 and IPv6 in UI
-    if (!t_udpSocket.bind(QHostAddress(QHostAddress::AnyIPv4))) {
-//    if (!udpSocket.bind(QHostAddress(QHostAddress::Any))) {
-        qDebug() << "UdpSender::UdpSender! Could not bind the socket!";
-        qDebug() << t_udpSocket.error();
-        qDebug() << t_udpSocket.errorString();
+    m_Mutex.lock();
+    int t_result = setsockopt(t_udpSocket, IPPROTO_IP, IP_TOS,
+                              (char *)&m_tos, sizeof (m_tos));
+    if (t_result < 0) {
+        qDebug() << "UdpSenderThread::run: could not set TOS";
+        close(t_udpSocket);
+        return;
+    }
+    m_Mutex.unlock();
+
+    /* We do not specify from which port we send, and bind to any interface or
+     * any IP on the computer
+     * We bind in order to receive the response from the satellite (udpecho)
+     */
+    struct sockaddr_in t_myAddress;
+    memset(&t_myAddress, 0, sizeof(struct sockaddr_in));
+    t_myAddress.sin_family = AF_INET;
+    t_myAddress.sin_addr.s_addr = INADDR_ANY;
+    t_result = bind(t_udpSocket,
+                    (struct sockaddr *)&t_myAddress, sizeof (t_myAddress));
+    if (t_result < 0) {
+        qDebug() << "UdpSenderThread::run: could not bind the socket";
+        close(t_udpSocket);
         return;
     }
 
-    qDebug() << t_udpSocket.localAddress();
-    qDebug() << t_udpSocket.localPort();
-    //FIXME: m_tos should be protected with a mutex, even if m_tos will never be accessed while the thread ist running
-    t_udpSocket.setSocketOption(QAbstractSocket::TypeOfServiceOption, m_tos);
+    /* We need the socket to be non blocking, so that we can send while no
+     * packets to write and vice versa */
+    t_result = fcntl(t_udpSocket, F_SETFL, O_NONBLOCK);
+    if (t_result < 0) {
+        qDebug() << "UdpSenderThread::run: could not set the socket non-blocking";
+        close(t_udpSocket);
+        return;
+    }
 
+    /********************************************************************
+    * Create the address structures to reach the satellite (udpecho)
+    *********************************************************************/
+    struct sockaddr_in t_destAddress;
+    memset(&t_destAddress, 0, sizeof(struct sockaddr_in));
+    t_destAddress.sin_family = AF_INET;
+    m_Mutex.lock();
+    t_destAddress.sin_addr.s_addr=htonl(m_destination.toIPv4Address());
+    t_destAddress.sin_port=htons(m_udpPort);
+    m_Mutex.unlock();
+    const socklen_t t_destAddressLen = sizeof (t_destAddress);
+
+
+    /********************************************************************
+    * Now initialise many variables
+    *********************************************************************/
+    // Current Time, ckecked frequently
     qint64 t_msecNow = QDateTime::currentMSecsSinceEpoch();
-    qint64 t_msecLast = t_msecNow;
+    // time differences
     qint64 t_msecDelta = 0;
-    qreal t_packets2Send = 0;
 
-    quint64 t_sendingCounter = 0;
 
-    qreal t_ppmsec;
-    int t_datagramSDULength;
-    char t_datagram[1500];
+    // Tc (Time Commited): Time interval in which to send the packets
+    const qint64 t_msecTc = 1000;
+    // Bc (Burst Commited): Packets to send per Time interval
+    m_Mutex.lock();
+    qint64 t_packetsBc = t_msecTc * m_ppmsec;
+    m_Mutex.unlock();
 
-    // Variables for reading pending Datagrams
-    QHostAddress t_sender;
-    quint16 t_senderPort;
-    quint64 t_receivedCounter;
-    qint64 t_msecSend;
+    /* keep track how much packets we have to send */
+    int t_packetBucket = t_packetsBc;
 
-    quint64 t_awaitedCounter = 0;
-    quint64 t_PacketsReceived = 0;
-    quint64 t_PacketsLost = 0;
-    quint64 t_CummuledLatency = 0;
+    // used to check the response from recv() and sendto()
+    ssize_t t_packetSize;
+
+    /* keep track when to refill the bucket */
+    qint64 t_msecNextRefill = t_msecNow + t_msecTc;
+
+    m_Mutex.lock();
+    const int t_datagramSDULength = m_datagramSDULength;
+    m_Mutex.unlock();
+
+    /* Our Datagram payloads for sending and receiving */
+    char t_datagramSend[t_datagramSDULength];
+    memset(t_datagramSend, 0, t_datagramSDULength);
+
+    char t_datagramReceive[t_datagramSDULength];
+    memset(t_datagramReceive, 0, t_datagramSDULength);
+
+    /* We keep track of the count of packets sended in order to detect packet loss
+     * We store the t_sendingCounter directly into the datagram to be send 7 received,
+     * so we do not have to copy them to/from there.
+    */
+    quint64 *t_sendingCounter = reinterpret_cast<quint64 *>(t_datagramSend + 8);
+    quint64 *t_returnedCounter = reinterpret_cast<quint64 *>(t_datagramReceive + 8);
+
+    // Packet counter we are waitung for
+    quint64 t_counterAwaited = 0;
+    // delta between awaited counter and received counter
+    int t_counterDelta;
+
+    const int t_chunkSize = 10;
+    int t_chunkCounter;
+
+    // Timestamp in the returned UDP datagram
+    qint64 t_msecReturned;
+
 
     // Stats
-    qreal t_L4BandwidthSend;   
-    qreal t_L4BandwidthReceived;
-    int t_ppsSent = 0;
-    int t_ppsReceived = 0;
+    qreal t_statsL4BandwidthSend;
+    qreal t_statsL4BandwidthReceived;
+    int t_statsPacketsSent = 0;
+    int t_statsPacketsReceived = 0;
+    int t_statsPacketsLost = 0;
+    quint64 t_statsCummuledLatency = 0;
+
+
+    const qint64 t_statsReportInterval = 1000;
     qint64 t_statLastTime = t_msecNow;
-    qint64 t_statsTimeDelta = 0;
-    quint64 t_statL4BytesReceived = 0;
-    quint64 t_statL4BytesSend = 0;
+    qint64 t_statNextTime = t_msecNow + t_statsReportInterval;
+    qint64 t_statDeltaTime;
 
-    qint64 datagramSize;
+    qint64 t_latency;
 
-    qint64 latency;
+    /*****************************************************************
+     * with poll we can check if the socket can be read or written to
+     * We need two different structures: one only for reading and one for reading and writing.
+     */
+    struct pollfd t_pollRead;
+    t_pollRead.fd = t_udpSocket;
+    t_pollRead.events = POLLIN;
 
-    /* We access the parameter at the begining of the Thread.
-     * If the parameter are changed, the caller must ensure that the tread ist restarted
+    struct pollfd t_pollReadWrite;
+    t_pollReadWrite.fd = t_udpSocket;
+    t_pollReadWrite.events = POLLIN|POLLOUT;
 
-      We don't need a mutex, as the variable is not changed while the thread is running
-    */
-    t_datagramSDULength = m_datagramSDULength;
-    t_ppmsec = m_ppmsec;
-    qDebug() << t_ppmsec;
 
+    /********************************************************************
+    * This is our thread loop. It last forever and will be broken when m_stoped ist set to true.
+    * TODO: Check if we can just kill the thread insted of setting m_stopped to true?
+    *********************************************************************/
     forever {
         // Stop the thread when m_stopped is set to true from the main thread.
+        // FIXME: is bool atomic? Ca we use no mutex here?
         m_Mutex.lock();
         if (m_stopped) {
-            qDebug() << "Stopping the Thread";
             m_stopped = false;
             m_Mutex.unlock();
+            /* Break outside the forever loop */
             break;
         }
         m_Mutex.unlock();
 
-        // First, send pending datagrams
-        t_msecNow = QDateTime::currentMSecsSinceEpoch();
-        t_msecDelta = t_msecNow - t_msecLast;
-
-        t_packets2Send = t_msecDelta * t_ppmsec + t_packets2Send;
-
-        // we never exceed the bandwidth: only send when packets2Send > 1
-        while (t_packets2Send > 1) {
-            // Save Timestamp
-            qToBigEndian(t_msecNow, reinterpret_cast<uchar *>(t_datagram));
-
-            // Save Counter
-            qToBigEndian(t_sendingCounter, reinterpret_cast<uchar *>(t_datagram + 8));
-
-            t_udpSocket.writeDatagram(t_datagram, t_datagramSDULength, m_destination, m_udpPort);
-
-            t_sendingCounter++;
-
-            t_packets2Send--;
-
-            // Stats
-            t_statL4BytesSend += t_datagramSDULength + 8; // PDU = Header (8 Bytes) + SDU;
-            t_ppsSent++;
-        }
-
-        t_msecLast = t_msecNow;
-
-        /*****************************************/
-        // Then read pending datagrams
-        datagramSize = t_udpSocket.pendingDatagramSize();
-        while (datagramSize != -1) {
-            //We just need the first 16 bytes, read timestamp & counter.
-            t_udpSocket.readDatagram(t_datagram, 16, &t_sender, &t_senderPort);
-            t_msecSend = qFromBigEndian<quint64>(reinterpret_cast<const uchar *>(t_datagram));
-            t_receivedCounter = qFromBigEndian<quint64>(reinterpret_cast<const uchar *>(t_datagram + 8));
-
-            // Stats calculation
-            latency = t_msecNow - t_msecSend;
-
-
-            // We only work wih latency < 2 sec
-            if (latency >=0 && latency < 2000
-                    //, the datagram Size must be the same as sending
-                    && datagramSize == t_datagramSDULength
-                    // and the received Counter must me smaller as the current sending counter
-                    && t_receivedCounter < t_sendingCounter) {
-                if (t_receivedCounter == t_awaitedCounter) {
-                    // This is the awaited Paket
-                    t_awaitedCounter++;
-                    t_PacketsReceived++;
-                    t_ppsReceived++;
-                    t_CummuledLatency += latency;
-                    t_statL4BytesReceived += t_datagramSDULength + 8; // PDU = Header (8 Bytes) + SDU
-                } else if (t_receivedCounter > t_awaitedCounter) {
-                    QString hexReceived, hexAwaited, hexSending;
-                    hexReceived.setNum(t_receivedCounter, 16);
-                    hexAwaited.setNum(t_awaitedCounter, 16);
-                    hexSending.setNum(t_sendingCounter, 16);
-                    qDebug() << "Loss at " << t_receivedCounter << "Awaited " << t_awaitedCounter << " Current" << t_sendingCounter;
-                    qDebug() << "Loss at " << hexReceived << "Awaited " << hexAwaited << " Current" << hexSending;
-
-                    // One correct packet received, but Packet loss !
-                    t_PacketsLost += t_receivedCounter - t_awaitedCounter;
-                    t_PacketsReceived++;
-                    t_CummuledLatency += latency;
-                    t_statL4BytesReceived += t_datagramSDULength + 8; // PDU = Header (8 Bytes) + SDU
-                    t_awaitedCounter = t_receivedCounter + 1;
-
-                }
-                // else {
-                    // We have a Packet duplication or a reordered packet => we ignore it
-                //}
-
+        /********************************************************************
+        * First step: receive as much packets as possible, in order to clear the buffers.
+        * We begin with receiving becaue we do not want packet drops comming from overfull receiving buffers.
+        * With the chunk, we alternate sending and reciving. But we give reciving a bigger chunk, because we do
+        * not want to have packet loss because of to small buffers.
+        * As soon as there is nothing to receive, recv will return -1 and we go on to second step.
+        ********************************************************************/
+        t_chunkCounter = 5 * t_chunkSize;
+        while (t_chunkCounter > 0) {
+            t_packetSize = recv(t_udpSocket, &t_datagramReceive, t_datagramSDULength, 0);
+            if (t_packetSize < 0) {
+                /* Error or buffers full (EAGAIN or EWOULDBLOCK) => stop
+                 * sending for now and go to next step */
+                break;
             }
-    //        qDebug() << QDateTime::currentDateTime().toString("hh:mm:ss,zzz") +
-    //                                " Datagram received from " + sender.toString() +
-    //                                " Counter " + QString::number(receivedCounter) +
-    //                                " Size " + QString::number(datagramSize) +
-    //                                " Send at " + QDateTime::fromMSecsSinceEpoch(msecSend).toString("hh:mm:ss,zzz");
+            t_msecReturned = qFromBigEndian<quint64>(reinterpret_cast<const uchar *>(&t_datagramReceive));
 
-            // read next datagram Size
-            datagramSize = t_udpSocket.pendingDatagramSize();
+            t_msecNow = QDateTime::currentMSecsSinceEpoch();
+            t_latency = t_msecNow - t_msecReturned;
+
+            t_counterDelta = *t_returnedCounter - t_counterAwaited;
+            if (t_counterDelta == 0) {
+                // This is the awaited Paket
+                t_counterAwaited++;
+                t_statsPacketsReceived++;
+                t_statsCummuledLatency += t_latency;
+            } else if (t_counterDelta > 0) {
+                // One packet was received, but packets inbetween have been lost
+                t_statsPacketsLost = t_statsPacketsLost + (t_counterDelta);
+                t_statsPacketsReceived++;
+                t_statsCummuledLatency += t_latency;
+                t_counterAwaited = *t_returnedCounter + 1;
+            } else {
+                // We received a counter which is smaller as the awaited counter
+                // We have a Packet duplication or a reordered packet => we ignore it
+                qDebug("Dup or reordered!");
+            }
+            t_chunkCounter--;
         }
 
-        /*****************************************/
-        // TODO: Emit Stats when needed (every second)
-        t_statsTimeDelta = t_msecNow - t_statLastTime;
-        if (t_statsTimeDelta > 1000) {
-            t_L4BandwidthSend = t_statL4BytesSend * 8 / t_statsTimeDelta * 1000;
-            t_L4BandwidthReceived = t_statL4BytesReceived * 8 / t_statsTimeDelta * 1000;
+        /********************************************************************
+        * Second step: send as much packets as possible
+        * If the buffers are full, we get a negative result from sendto
+        *********************************************************************/
+        t_msecNow = QDateTime::currentMSecsSinceEpoch();
+        // Do we need to refill our Bucket?
+        if (t_msecNextRefill <= t_msecNow) {
+            t_msecNextRefill += t_msecTc;
+            t_packetBucket = t_packetsBc;
+        }
+
+        t_chunkCounter = qMin(t_packetBucket, t_chunkSize);
+        while (t_chunkCounter > 0) {
+            t_msecNow = QDateTime::currentMSecsSinceEpoch();
+            qToBigEndian(t_msecNow, reinterpret_cast<uchar *>(t_datagramSend));
+            t_packetSize = sendto(t_udpSocket, &t_datagramSend, t_datagramSDULength, 0,
+                                 (struct sockaddr *)&t_destAddress, t_destAddressLen);
+            if (t_packetSize < 0) {
+                /* Error or buffers full (EAGAIN or EWOULDBLOCK) => stop sending for now */
+                break;
+            }
+            t_statsPacketsSent++;
+            *t_sendingCounter = *t_sendingCounter + 1;
+            // NOTE: Maybe optimisation here (only decerease packetBucker an run the while against a limit)
+            t_packetBucket--;
+            t_chunkCounter--;
+        }
+
+        /********************************************************************
+        * Second step: emit stats (once per second)
+        *********************************************************************/
+        t_msecNow = QDateTime::currentMSecsSinceEpoch();
+        if (t_statNextTime < t_msecNow) {
+        t_statDeltaTime = t_msecNow - t_statLastTime;
+
+            // NOTE: This is an aproximation. If the stats are to bad, we will need to calculate the delta
+            t_statsL4BandwidthSend = t_statsPacketsSent * t_datagramSDULength * 8 / t_statDeltaTime * 1000;
+            t_statsL4BandwidthReceived = t_statsPacketsReceived * t_datagramSDULength * 8 / t_statDeltaTime * 1000;
 
             // The signal will be send to the main thread, this is qt magic :-)
-            emit statistics(t_L4BandwidthSend, t_L4BandwidthReceived, t_PacketsLost, t_ppsSent, t_ppsReceived);
+            // FIXME: Latency not sended
+            emit statistics(t_statsL4BandwidthSend, t_statsL4BandwidthReceived, t_statsPacketsLost,
+                            t_statsPacketsSent, t_statsPacketsReceived);
 
             // Reset stat counter for next period
-            t_statL4BytesSend = 0;
-            t_statL4BytesReceived = 0;
-            t_ppsSent = 0;
-            t_ppsReceived = 0;
+            t_statsPacketsSent = 0;
+            t_statsPacketsReceived = 0;
             t_statLastTime = t_msecNow;
+            t_statNextTime += t_statsReportInterval;
         }
 
         /*****************************************/
         // Sleep for a while. We use a very slow sleep time as linux has very small udp recieve buffers
         // FIXME: use bigger buffers when available an inform user how to improve performance.
 //        msleep(1);
-        usleep(10);
 
+        // FIXME - Listen to the socket until a packet is received, I need to send an a packet ca be send or timeout (next Tc-Time)
+
+        t_msecNow = QDateTime::currentMSecsSinceEpoch();
+        // wait until we refill our bucket
+        t_msecDelta = t_msecNextRefill - t_msecNow;
+        if (t_msecDelta > 0) {
+            if (t_packetBucket >0) {
+                // we still have something to send
+                poll(&t_pollReadWrite, 1, t_msecDelta);
+            } else {
+                // we just wait for udp echos
+                poll(&t_pollRead, 1, t_msecDelta);
+            }
+        }
     }
+
+    // Ending the thread - close socket
+    close(t_udpSocket);
+
     // Clean Statistics when ending thread
     emit statistics(0, 0, 0, 0, 0);
 }
