@@ -28,8 +28,8 @@ public:
     QString name();
     QUuid id();
 
-    void setBandwidth(qreal bandwidth, NetworkModel::Layer bandwidthLayer);
-    qreal specifiedBandwidth(NetworkModel::Layer bandwidthLayer);
+    void setBandwidth(uint bandwidth, NetworkModel::Layer bandwidthLayer);
+    uint specifiedBandwidth(NetworkModel::Layer bandwidthLayer);
     void setPduSize(uint pduSize, NetworkModel::Layer pduSizeLayer);
     uint specifiedPduSize(NetworkModel::Layer pduLayer);
 
@@ -37,8 +37,8 @@ public:
     void stopTraffic();
 
     /***** Statistics *****/
-    qreal sendingBandwidth(NetworkModel::Layer bandwidthLayer);
-    qreal receivingBandwidth(NetworkModel::Layer bandwidthLayer);
+    uint sendingBandwidth(NetworkModel::Layer bandwidthLayer);
+    uint receivingBandwidth(NetworkModel::Layer bandwidthLayer);
     int sendingPps();
     int receivingPps();
     int packetLost();
@@ -47,30 +47,15 @@ signals:
     void statsChanged();
 
 public slots:
-    void receiveStatistics(qreal L4BandwidthSend, qreal L4BandwidthReceived, quint64 packetsLost, int ppsSent, int ppsReceived);
+    void receiveStatistics(quint64 packetsLost, quint64 packetsSent, quint64 packetsReceived);
 
 private:
-    // We have to keep track what parameters have been set for the udpSender
-    // Bandwidth in bits per second
-    qreal m_bandwidth;
-    NetworkModel::Layer m_bandwidthLayer;
-    // PDU Size in Bytes
-    uint m_pduSize;
-    NetworkModel::Layer m_pduSizeLayer;
-
-    // These values are calculated from the parameters bandwidth and pduSize
-    // Default values are set do avoid a division by zero somewhere
-    // This is the Payoad of udp without header.
-    int m_datagramSDULength;
-    // Packets per milisecond to send. We work with miliseconds to reduce calculation in the sending algotithm.
-    qreal m_ppmsec;
-
     QHostAddress m_destination;
 
     UdpSenderThread m_thread;
 
     int m_udpPort = 7;
-    quint8 mTos = 0;
+    quint8 m_tos = 0;
 
     // Unique identifier
     QUuid m_id;
@@ -79,8 +64,9 @@ private:
 
     /***** Statistics *****/
     quint64 m_PacketsLost = 0;
-    qreal m_statL4BandwidthSent = 0;
-    qreal m_statL4BandwidthReceived = 0;
+    quint64 m_PacketsSend = 0;
+    quint64 m_PacketsReceived = 0;
+    qint64 m_lastStats;
     int m_sentPps = 0;
     int m_receivedPps = 0;
 

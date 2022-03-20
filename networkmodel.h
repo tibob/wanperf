@@ -16,6 +16,7 @@
 class NetworkModel
 {
 public:
+    NetworkModel();
 
     /*!
      * \brief The NetworkType enum
@@ -33,8 +34,9 @@ public:
     enum Layer {
         Layer1 = 1,
         Layer2,
+        Layer2noCRC,
         Layer3,
-        Layer4
+        Layer4,
     };
 
     enum BandwidthUnit {
@@ -43,30 +45,44 @@ public:
         mbps
     };
 
-    explicit NetworkModel(NetworkType type = NetworkType::EthernetWithoutVLAN);
+    uint setPduSize(uint size, NetworkModel::Layer layer);
+    uint pduSize(NetworkModel::Layer layer);
 
+    uint setBandwidth(uint newBandwidth, NetworkModel::Layer layer);
+    uint bandwidth(NetworkModel::Layer layer);
 
-    void setNetworkType(NetworkModel::NetworkType type);
+    // Used to calculate the Bandwidth for Statistics
+    uint pps2bandwidth(qreal pps, NetworkModel::Layer layer);
 
-    uint pduSize(uint fromSize, NetworkModel::Layer fromLayer, NetworkModel::Layer toLayer);
-    qreal pps(uint fromPduSize, NetworkModel::Layer pduLayer, qreal bandwidth, NetworkModel::Layer bandwidthLayer);
-    qreal bandwidth(qreal pps, uint fromPduSize, NetworkModel::Layer pduLayer, NetworkModel::Layer bandwidthLayer);
-    qreal bandwidth(qreal fromBandwidth, NetworkModel::Layer fromBandwidthLayer,
-                    uint fromPduSize, NetworkModel::Layer fromPduSizeLayer,
-                    NetworkModel::Layer toBandwidthLayer);
+    qreal pps();
 
     static QString layerName(NetworkModel::Layer layer);
     static QString layerShortName(NetworkModel::Layer layer);
 
 
 private:
-    NetworkModel::NetworkType m_networkType;
-    uint L1overhead;
-    uint L2overhead;
-    uint L3overhead;
+    // Peramble = 7, Start of Delimiter = 1, Interpacket gap = 12
+    uint m_L1overhead;
+    // SRC = 6, DST = 6, Ethertype = 2, CRC = 4
+    uint m_L2overhead;
+    // SRC = 6, DST = 6, Ethertype = 2
+    uint m_L2noCRCoverhead;
+    // IP Header
+    uint m_L3overhead;
 
-    uint minL2FrameLength;
-    uint maxL2FrameLength;
+    // Current udp Size & bandwith. These are the reference for converting into other Layers
+    uint m_udpSize;
+    // Bandwidth in bits per second
+    uint m_udpBandwidth;
+    // Current packets per second. Used to calculate the bandwidth
+    // TODO: Tc should be used to calculate Bc (in packets) and from it the Bandwidth.
+    // We must communicate Tc to the thread
+    qreal m_pps;
+
+    // Smalest and Biggest udp Size in order to reach smallest (64) and biggest (MTU 1500) Ethernet Frame
+    uint m_minUdpSize;
+    uint m_maxUdpSize;
+
 
     NetworkModel::Layer inputBandwidthLayer = NetworkModel::Layer2;
 };

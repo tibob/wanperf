@@ -10,127 +10,104 @@
  * Constructs a NetworkModel. The default value dor \a type is NetworkModel::EthernetWithoutVLAN
  *
  */
-NetworkModel::NetworkModel(NetworkType type)
+NetworkModel::NetworkModel()
 {
-    setNetworkType(type);
+    // FIXME: this should be (static) const, but I need a good cast for qMin/qMax and it is not my current prioriy
+    //        to find a good cast ;-)
+    // Peramble = 7, Start of Delimiter = 1, Interpacket gap = 12
+    m_L1overhead = 20;
+    // SRC = 6, DST = 6, Ethertype = 2, CRC = 4
+    m_L2overhead = 18;
+    // SRC = 6, DST = 6, Ethertype = 2
+    m_L2noCRCoverhead = 14;
+    // IP Header
+    m_L3overhead = 20;
+
+    // Minimal Ethethernet length = 64 bytes, minus ethernet header, minus IP header (20 Bytes)
+    m_minUdpSize = 64 - 18 - 20;
+    // IP MTU minus IP header
+    m_maxUdpSize = 1500 - 20;
+
+    // Initialize to something
+    m_udpSize = 1000;
+    m_udpBandwidth = 100;
 }
 
-void NetworkModel::setNetworkType(NetworkModel::NetworkType type)
+uint NetworkModel::setPduSize(uint size, NetworkModel::Layer layer)
 {
-    m_networkType = type;
-
-    // Layer 1: Physical
-    switch(type) {
-    case EthernetWithoutVLAN:
-    case EthernetWithVLAN:
-        // Peramble = 7, Start of Delimiter = 1, Interpacket gap = 12
-        L1overhead = 20;
+    switch(layer) {
+    case NetworkModel::Layer1:
+        m_udpSize = size - m_L1overhead - m_L2overhead - m_L3overhead;
+        break;
+    case NetworkModel::Layer2:
+        m_udpSize = size              - m_L2overhead - m_L3overhead;
+        break;
+    case NetworkModel::Layer2noCRC:
+        m_udpSize = size         - m_L2noCRCoverhead - m_L3overhead;
+        break;
+    case NetworkModel::Layer3:
+        m_udpSize = size                             - m_L3overhead;
+        break;
+    case NetworkModel::Layer4:
+        m_udpSize = size;
         break;
     }
 
-    // Layer 2: Data Link
-    switch(type) {
-    case EthernetWithoutVLAN:
-        // SRC = 6, DST = 6, Ethertype = 2, CRC = 4
-        L2overhead = 18;
-        break;
-    case EthernetWithVLAN:
-        // SRC = 6, DST = 6, dot1q = 4, Ethertype = 2, CRC = 4
-        L2overhead = 22;
-        break;
-    }
+    m_udpSize = qMax(qMin(m_udpSize, m_maxUdpSize), m_minUdpSize);
 
-    // Layer 3: Network
-    switch(type) {
-    case EthernetWithoutVLAN:
-    case EthernetWithVLAN:
-        // IP Header = 20 Bytes
-        // FIXME: and IPv6 ?
-        L3overhead = 20;
-        break;
-    }
+    // recalculate pps
+    setBandwidth(m_udpBandwidth, NetworkModel::Layer4);
 
-    // Minimal and Maximal L2 Frame Size
-    switch(type) {
-    case EthernetWithoutVLAN:
-    case EthernetWithVLAN:
-        minL2FrameLength = 64;
-        maxL2FrameLength = 1500 + L2overhead;
-        break;
-    }
+    return pduSize(layer);
 }
 
-uint NetworkModel::pduSize(uint fromSize, NetworkModel::Layer fromLayer, NetworkModel::Layer toLayer)
+uint NetworkModel::pduSize(NetworkModel::Layer layer)
 {
-
-    // First, we need to caclulate the Layer 2 Size because Layer 2 defines the min and max size of a Frame.
-    uint tmpL2Size = 0;
-
-    switch(fromLayer) {
+    switch (layer) {
     case NetworkModel::Layer1:
-        tmpL2Size = fromSize - L1overhead;
-        break;
+        return m_udpSize + m_L3overhead + m_L2overhead + m_L1overhead;
     case NetworkModel::Layer2:
-        tmpL2Size = fromSize;
-        break;
+        return m_udpSize + m_L3overhead + m_L2overhead;
+    case NetworkModel::Layer2noCRC:
+        return m_udpSize + m_L3overhead + m_L2noCRCoverhead;
     case NetworkModel::Layer3:
-        tmpL2Size = fromSize + L2overhead;
-        break;
+        return m_udpSize + m_L3overhead;
     case NetworkModel::Layer4:
-        tmpL2Size = fromSize + L2overhead + L3overhead;
-        break;
+        return m_udpSize;
     }
 
-    // After padding or reducing the Frame size, we get the real Frame Size
-    tmpL2Size = qMax(qMin(tmpL2Size, maxL2FrameLength), minL2FrameLength);
-
-    switch (toLayer) {
-    case NetworkModel::Layer1:
-        return tmpL2Size + L1overhead;
-    case NetworkModel::Layer2:
-        return tmpL2Size;
-    case NetworkModel::Layer3:
-        return tmpL2Size - L2overhead;
-    case NetworkModel::Layer4:
-        return tmpL2Size - L2overhead - L3overhead;
-    }
-
-    /* This code is never reached */
+    /* This code is never reached but the compiler wants it*/
     Q_ASSERT(true);
-    return 0;
+
+    return m_udpSize;
 }
 
-
-/*
- * PDUSize in Bytes
- * bandwidth in bits per second
- *
- * Returns the pps in packes per second
- */
-qreal NetworkModel::pps(uint fromPduSize, NetworkModel::Layer pduLayer, qreal bandwidth, NetworkModel::Layer bandwidthLayer)
+uint NetworkModel::setBandwidth(uint newBandwidth, NetworkModel::Layer layer)
 {
-    uint pduSizeInTheBandwidthLayer = pduSize(fromPduSize, pduLayer, bandwidthLayer);
+    /* We never set m_udpSize to 0 */
+    Q_ASSERT(m_udpSize != 0);
 
-    if (pduSizeInTheBandwidthLayer == 0) {
-        return 0;
-    } else {
-        return bandwidth / (pduSizeInTheBandwidthLayer * 8);
-    }
+    m_pps = (qreal) newBandwidth / (pduSize(layer) * 8);
+    // we round to the nearest integer. If we would not use qRound, it would round down
+    m_udpBandwidth = qRound(m_pps * m_udpSize * 8);
+
+    return bandwidth(layer);
 }
 
-qreal NetworkModel::bandwidth(qreal pps, uint fromPduSize, NetworkModel::Layer pduLayer, NetworkModel::Layer bandwidthLayer)
+uint NetworkModel::bandwidth(NetworkModel::Layer layer)
 {
-    uint bandwidthLayerPduSize = pduSize(fromPduSize, pduLayer, bandwidthLayer);
-
-    return pps * bandwidthLayerPduSize * 8;
+    // we round to the nearest integer. If we would not use qRound, it would round down
+    return qRound(m_pps * pduSize(layer) * 8);
 }
 
-qreal NetworkModel::bandwidth(qreal fromBandwidth, NetworkModel::Layer fromBandwidthLayer,
-                              uint fromPduSize, NetworkModel::Layer fromPduSizeLayer,
-                              NetworkModel::Layer toBandwidthLayer)
+uint NetworkModel::pps2bandwidth(qreal pps, NetworkModel::Layer layer)
 {
-    qreal l_pps = pps(fromPduSize, fromPduSizeLayer, fromBandwidth, fromBandwidthLayer);
-    return bandwidth(l_pps, fromPduSize, fromPduSizeLayer, toBandwidthLayer);
+    return pps * pduSize(layer) * 8;
+}
+
+qreal NetworkModel::pps()
+{
+    return m_pps;
 }
 
 QString NetworkModel::layerName(NetworkModel::Layer layer)
@@ -140,6 +117,8 @@ QString NetworkModel::layerName(NetworkModel::Layer layer)
         return "Ethernet Physical Layer (L1)";
     case NetworkModel::Layer2:
         return "Ethernet Data Link Layer (L2)";
+    case NetworkModel::Layer2noCRC:
+        return "Ethernet Data Link Layer without CRC Filed (L2)";
     case NetworkModel::Layer3:
         return "IP Network Layer (L3)";
     case NetworkModel::Layer4:
@@ -158,6 +137,8 @@ QString NetworkModel::layerShortName(NetworkModel::Layer layer)
         return "L1";
     case NetworkModel::Layer2:
         return "L2";
+    case NetworkModel::Layer2noCRC:
+        return "L2noCRC";
     case NetworkModel::Layer3:
         return "L3";
     case NetworkModel::Layer4:

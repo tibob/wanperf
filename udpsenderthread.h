@@ -13,15 +13,15 @@ class UdpSenderThread : public QThread
 public:
     UdpSenderThread();
 
-    bool setTos(quint8 tos);
-    bool setDatagramSDULength(int length);
-    bool setPpmsec(qreal ppmsec);
+    void setTos(quint8 tos);
+    void setDatagramSDULength(int length);
+    void setPpmsec(qreal ppmsec);
     bool setPort(int port);
     bool setDestination(QHostAddress address);
     void stop();
 
 signals:
-    void statistics(qreal L4BandwidthSend, qreal L4BandwidthReceived, quint64 packetsLost, int ppsSent, int ppsReceived);
+    void statistics(quint64 packetsLost, quint64 packetsSent, quint64 packetsReceived);
 
 protected:
     void run() Q_DECL_OVERRIDE;

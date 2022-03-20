@@ -3,8 +3,10 @@ Stats:
 - pps for each thread
 - WAN extrapolation
 - Packet loss in %
+- Display stats for all Layers
 
 Whishlist
+- Remember last settings + save Flows
 - Use QHostInfo to do a DNS-Lookup on destinationHost
 - dynamic port numbers per flow (would be easier for the user, only the expert needs to set the udp port?
 - Pause one of the UdpEcho

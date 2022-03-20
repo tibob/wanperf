@@ -56,17 +56,17 @@ QVariant UdpSenderListModel::data(const QModelIndex &index, int role) const
         case COL_DSCP:
             return udpSenderList[index.row()]->dscp();
         case COL_BANDWIDTH:
-            return locale.toString(udpSenderList[index.row()]->specifiedBandwidth(m_BandwidthLayer) / m_BandwidthUnit,
+            return locale.toString((qreal) udpSenderList[index.row()]->specifiedBandwidth(m_BandwidthLayer) / m_BandwidthUnit,
                     'f', QLocale::FloatingPointShortest);
         case COL_PORT:
             return udpSenderList[index.row()]->port();
         case COL_SIZE:
             return locale.toString(udpSenderList[index.row()]->specifiedPduSize(m_PDUSizeLayer));
         case COL_SENDINGRATE:
-            return locale.toString(udpSenderList[index.row()]->sendingBandwidth(m_BandwidthLayer) / m_BandwidthUnit,
+            return locale.toString((qreal) udpSenderList[index.row()]->sendingBandwidth(m_BandwidthLayer) / m_BandwidthUnit,
                     'f', 2);
         case COL_RECEIVINGRATE:
-            return locale.toString(udpSenderList[index.row()]->receivingBandwidth(m_BandwidthLayer) / m_BandwidthUnit,
+            return locale.toString((qreal) udpSenderList[index.row()]->receivingBandwidth(m_BandwidthLayer) / m_BandwidthUnit,
                     'f', 2);
         case COL_PACKETLOST:
             return locale.toString(udpSenderList[index.row()]->packetLost());

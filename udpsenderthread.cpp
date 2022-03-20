@@ -14,7 +14,7 @@ UdpSenderThread::UdpSenderThread()
 {
 }
 
-bool UdpSenderThread::setTos(quint8 tos)
+void UdpSenderThread::setTos(quint8 tos)
 {
     if (isRunning()) {
         // We don't change TOS while the Thread ist runing. First stop the thread
@@ -24,12 +24,9 @@ bool UdpSenderThread::setTos(quint8 tos)
     } else {
         m_tos = tos;
     }
-
-    // FIXME: we don't need this feedback
-    return true;
 }
 
-bool UdpSenderThread::setDatagramSDULength(int length)
+void UdpSenderThread::setDatagramSDULength(int length)
 {
     if (isRunning()) {
         // We don't change SDU Length while the Thread ist running. First stop the thread
@@ -41,12 +38,9 @@ bool UdpSenderThread::setDatagramSDULength(int length)
     } else {
         m_datagramSDULength = length;
     }
-
-    // FIXME: we don't need this feedback
-    return true;
 }
 
-bool UdpSenderThread::setPpmsec(qreal ppmsec)
+void UdpSenderThread::setPpmsec(qreal ppmsec)
 {
     if (isRunning()) {
         // We don't change ppmsec while the Thread ist running. First Stop the thread
@@ -58,7 +52,6 @@ bool UdpSenderThread::setPpmsec(qreal ppmsec)
     } else {
         m_ppmsec = ppmsec;
     }
-    return true;
 }
 
 bool UdpSenderThread::setPort(int port)
@@ -182,7 +175,7 @@ void UdpSenderThread::run()
 
 
     // Tc (Time Commited): Time interval in which to send the packets
-    const qint64 t_msecTc = 1000;
+    const qint64 t_msecTc = 100;
     // Bc (Burst Commited): Packets to send per Time interval
     m_Mutex.lock();
     qint64 t_packetsBc = t_msecTc * m_ppmsec;
@@ -228,18 +221,14 @@ void UdpSenderThread::run()
 
 
     // Stats
-    qreal t_statsL4BandwidthSend;
-    qreal t_statsL4BandwidthReceived;
-    int t_statsPacketsSent = 0;
     int t_statsPacketsReceived = 0;
     int t_statsPacketsLost = 0;
     quint64 t_statsCummuledLatency = 0;
 
 
     const qint64 t_statsReportInterval = 1000;
-    qint64 t_statLastTime = t_msecNow;
-    qint64 t_statNextTime = t_msecNow + t_statsReportInterval;
-    qint64 t_statDeltaTime;
+    // Report stats before next Tc
+    qint64 t_statNextTime = t_msecNow + t_statsReportInterval - 5;
 
     qint64 t_latency;
 
@@ -313,7 +302,25 @@ void UdpSenderThread::run()
         }
 
         /********************************************************************
-        * Second step: send as much packets as possible
+        * Second step: emit stats (once per second)
+        * We do this befor we send new packets and hope to get better stats
+        * The problem is that the stats vary in time
+        *********************************************************************/
+        t_msecNow = QDateTime::currentMSecsSinceEpoch();
+        if (t_statNextTime < t_msecNow) {
+
+            // The signal will be send to the main thread, this is qt magic and is thread-safe :-)
+            // FIXME: Latency not sended
+            emit statistics(t_statsPacketsLost, *t_sendingCounter, t_statsPacketsReceived);
+
+            // Reset stat counter for next period.
+            // TODO: - when the stats a in synch with Tc, they slightly change in time
+//            t_statNextTime = t_msecNow + t_statsReportInterval;
+            t_statNextTime += t_statsReportInterval;
+        }
+
+        /********************************************************************
+        * Third step: send as much packets as possible
         * If the buffers are full, we get a negative result from sendto
         *********************************************************************/
         t_msecNow = QDateTime::currentMSecsSinceEpoch();
@@ -333,35 +340,14 @@ void UdpSenderThread::run()
                 /* Error or buffers full (EAGAIN or EWOULDBLOCK) => stop sending for now */
                 break;
             }
-            t_statsPacketsSent++;
             *t_sendingCounter = *t_sendingCounter + 1;
             // NOTE: Maybe optimisation here (only decerease packetBucker an run the while against a limit)
             t_packetBucket--;
             t_chunkCounter--;
         }
 
-        /********************************************************************
-        * Second step: emit stats (once per second)
-        *********************************************************************/
-        t_msecNow = QDateTime::currentMSecsSinceEpoch();
-        if (t_statNextTime < t_msecNow) {
-        t_statDeltaTime = t_msecNow - t_statLastTime;
 
-            // NOTE: This is an aproximation. If the stats are to bad, we will need to calculate the delta
-            t_statsL4BandwidthSend = t_statsPacketsSent * t_datagramSDULength * 8 / t_statDeltaTime * 1000;
-            t_statsL4BandwidthReceived = t_statsPacketsReceived * t_datagramSDULength * 8 / t_statDeltaTime * 1000;
 
-            // The signal will be send to the main thread, this is qt magic :-)
-            // FIXME: Latency not sended
-            emit statistics(t_statsL4BandwidthSend, t_statsL4BandwidthReceived, t_statsPacketsLost,
-                            t_statsPacketsSent, t_statsPacketsReceived);
-
-            // Reset stat counter for next period
-            t_statsPacketsSent = 0;
-            t_statsPacketsReceived = 0;
-            t_statLastTime = t_msecNow;
-            t_statNextTime += t_statsReportInterval;
-        }
 
         /*****************************************/
         // Sleep for a while. We use a very slow sleep time as linux has very small udp recieve buffers
@@ -371,8 +357,12 @@ void UdpSenderThread::run()
         // FIXME - Listen to the socket until a packet is received, I need to send an a packet ca be send or timeout (next Tc-Time)
 
         t_msecNow = QDateTime::currentMSecsSinceEpoch();
-        // wait until we refill our bucket
-        t_msecDelta = t_msecNextRefill - t_msecNow;
+        // wait until we refill our bucket or we have to send stats
+        if (t_msecNextRefill < t_statNextTime) {
+            t_msecDelta = t_msecNextRefill - t_msecNow;
+        } else {
+            t_msecDelta = t_statNextTime - t_msecNow;
+        }
         if (t_msecDelta > 0) {
             if (t_packetBucket >0) {
                 // we still have something to send
@@ -386,7 +376,4 @@ void UdpSenderThread::run()
 
     // Ending the thread - close socket
     close(t_udpSocket);
-
-    // Clean Statistics when ending thread
-    emit statistics(0, 0, 0, 0, 0);
 }

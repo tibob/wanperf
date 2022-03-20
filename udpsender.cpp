@@ -16,10 +16,13 @@ UdpSender::UdpSender(QObject *parent) :
     setNetworkModel(NetworkModel());
 
     // Initialise PDU Size & Bandwidth to some Value
-    setBandwidth(100000000, NetworkModel::Layer2);
-    setPduSize(512, NetworkModel::Layer2);
+    setBandwidth(10000, NetworkModel::Layer4);
+    setPduSize(500, NetworkModel::Layer4);
 
-    connect(&m_thread, SIGNAL(statistics(qreal,qreal,quint64,int,int)), this, SLOT(receiveStatistics(qreal,qreal,quint64,int,int)));
+    m_lastStats = QDateTime::currentMSecsSinceEpoch();
+
+    connect(&m_thread, SIGNAL(statistics(quint64,quint64,quint64)),
+            this,      SLOT(receiveStatistics(quint64,quint64,quint64)));
 }
 
 void UdpSender::setNetworkModel(NetworkModel model)
@@ -54,10 +57,8 @@ int UdpSender::port()
 
 void UdpSender::setTos(quint8 tos)
 {
-    if (m_thread.setTos(tos)) {
-        mTos = tos;
-    }
-    // if setting the TOS failed, do nothing.
+    m_tos = tos;
+    m_thread.setTos(tos);
 }
 
 void UdpSender::setDscp(quint8 dscp)
@@ -67,7 +68,7 @@ void UdpSender::setDscp(quint8 dscp)
 
 quint8 UdpSender::dscp()
 {
-    return mTos / 4;
+    return m_tos / 4;
 }
 
 void UdpSender::setName(QString newName)
@@ -85,49 +86,41 @@ QUuid UdpSender::id()
     return m_id;
 }
 
-void UdpSender::setBandwidth(qreal bandwidth, NetworkModel::Layer bandwidthLayer)
+void UdpSender::setBandwidth(uint bandwidth, NetworkModel::Layer bandwidthLayer)
 {
-    m_bandwidth = bandwidth;
-    m_bandwidthLayer = bandwidthLayer;
+    qreal ppmsec;
+
+    m_networkModel.setBandwidth(bandwidth, bandwidthLayer);
 
     // We need to recalculate the amount of packets per second, as the Bandwidth changed
-    m_ppmsec = m_networkModel.pps(m_pduSize, m_pduSizeLayer, m_bandwidth, m_bandwidthLayer) / 1000;
-
-    m_thread.setPpmsec(m_ppmsec);
+    ppmsec = m_networkModel.pps() / 1000;
+    m_thread.setPpmsec(ppmsec);
 }
 
-qreal UdpSender::specifiedBandwidth(NetworkModel::Layer bandwidthLayer)
+uint UdpSender::specifiedBandwidth(NetworkModel::Layer bandwidthLayer)
 {
-    return m_networkModel.bandwidth(m_bandwidth, m_bandwidthLayer, m_pduSize, m_pduSizeLayer, bandwidthLayer);
+    return m_networkModel.bandwidth(bandwidthLayer);
 }
 
 void UdpSender::setPduSize(uint pduSize, NetworkModel::Layer pduSizeLayer)
 {
-    uint l_pduSize;
-    int l_datagramSDULength;
-    qreal l_ppmsec;
+    uint udpPayloadLength;
+    qreal ppmsec;
 
-    // To be sure that the PDU Size is valid, we let it run again the Network Model
-    l_pduSize = m_networkModel.pduSize(pduSize, pduSizeLayer, pduSizeLayer);
+    m_networkModel.setPduSize(pduSize, pduSizeLayer);
 
     // Whe need to remove 8 bytes of the UDP Header to get the UDP Payload (datagram SDU) length.
-    l_datagramSDULength = m_networkModel.pduSize(l_pduSize, pduSizeLayer, NetworkModel::Layer4) - 8;
+    udpPayloadLength = m_networkModel.pduSize(NetworkModel::Layer4) - 8;
+    m_thread.setDatagramSDULength(udpPayloadLength);
 
     // We need to recalculate the amount of packets per second, as the PDU Size changed but not the Bandwidth
-    l_ppmsec = m_networkModel.pps(l_pduSize, pduSizeLayer, m_bandwidth, m_bandwidthLayer) / 1000;
-
-     if (m_thread.setDatagramSDULength(l_datagramSDULength) && m_thread.setPpmsec(l_ppmsec)) {
-        m_pduSize = l_pduSize;
-        m_pduSizeLayer = pduSizeLayer;
-        m_datagramSDULength = l_datagramSDULength;
-        m_ppmsec = l_ppmsec;
-    }
-    /* do nothing if the thread is running */
+    ppmsec = m_networkModel.pps() / 1000;
+    m_thread.setPpmsec(ppmsec);
 }
 
 uint UdpSender::specifiedPduSize(NetworkModel::Layer pduLayer)
 {
-    return m_networkModel.pduSize(m_pduSize, m_pduSizeLayer, pduLayer);
+    return m_networkModel.pduSize(pduLayer);
 }
 
 void UdpSender::startTraffic()
@@ -144,14 +137,14 @@ void UdpSender::stopTraffic()
     m_thread.stop();
 }
 
-qreal UdpSender::sendingBandwidth(NetworkModel::Layer bandwidthLayer)
+uint UdpSender::sendingBandwidth(NetworkModel::Layer bandwidthLayer)
 {
-    return m_networkModel.bandwidth(m_statL4BandwidthSent, NetworkModel::Layer4, m_pduSize, m_pduSizeLayer, bandwidthLayer);
+    return m_networkModel.pps2bandwidth(m_sentPps, bandwidthLayer);
 }
 
-qreal UdpSender::receivingBandwidth(NetworkModel::Layer bandwidthLayer)
+uint UdpSender::receivingBandwidth(NetworkModel::Layer bandwidthLayer)
 {
-    return m_networkModel.bandwidth(m_statL4BandwidthReceived, NetworkModel::Layer4, m_pduSize, m_pduSizeLayer, bandwidthLayer);
+    return m_networkModel.pps2bandwidth(m_receivedPps, bandwidthLayer);
 }
 
 int UdpSender::sendingPps()
@@ -169,11 +162,26 @@ int UdpSender::packetLost()
     return m_PacketsLost;
 }
 
-void UdpSender::receiveStatistics(qreal L4BandwidthSend, qreal L4BandwidthReceived, quint64 packetsLost, int ppsSent, int ppsReceived)
+void UdpSender::receiveStatistics(quint64 packetsLost, quint64 packetsSent, quint64 packetsReceived)
 {
-    m_statL4BandwidthReceived = L4BandwidthReceived;
-    m_statL4BandwidthSent = L4BandwidthSend;
+    qint64 statTime = QDateTime::currentMSecsSinceEpoch();
+
+    if (statTime == m_lastStats) {
+        // The last statistics were in the same msec. This should not occur, but perhaps the thread is busy
+        // We ignore these Statistics
+        qDebug() << "two stats at the same time...";
+        return;
+    }
+
+    qint64 sendDelta = packetsSent - m_PacketsSend;
+    qint64 receivedDelta = packetsReceived - m_PacketsReceived;
+    qint64 timeDela = statTime - m_lastStats;
+
+    m_sentPps     = 1000 * sendDelta / timeDela;
+    m_receivedPps = 1000 * receivedDelta /timeDela;
+
     m_PacketsLost = packetsLost;
-    m_sentPps = ppsSent;
-    m_receivedPps = ppsReceived;
+    m_PacketsSend = packetsSent;
+    m_PacketsReceived = packetsReceived;
+    m_lastStats = statTime;
 }

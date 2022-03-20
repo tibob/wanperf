@@ -63,8 +63,6 @@ private:
         COL_COUNT
     };
 
-    NetworkModel m_networkModel;
-
     /* Diese Werte aus der UI sind wichtig, da der Modell muss wissen, in welchen Layer oder Einheit die Daten angegeben werden */
     NetworkModel::Layer m_PDUSizeLayer;
     NetworkModel::Layer m_BandwidthLayer;
