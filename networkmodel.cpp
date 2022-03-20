@@ -35,22 +35,30 @@ NetworkModel::NetworkModel()
 
 uint NetworkModel::setPduSize(uint size, NetworkModel::Layer layer)
 {
+    int tmp_size;
+
     switch(layer) {
     case NetworkModel::Layer1:
-        m_udpSize = size - m_L1overhead - m_L2overhead - m_L3overhead;
+        tmp_size = size - m_L1overhead - m_L2overhead - m_L3overhead;
         break;
     case NetworkModel::Layer2:
-        m_udpSize = size              - m_L2overhead - m_L3overhead;
+        tmp_size = size              - m_L2overhead - m_L3overhead;
         break;
     case NetworkModel::Layer2noCRC:
-        m_udpSize = size         - m_L2noCRCoverhead - m_L3overhead;
+        tmp_size = size         - m_L2noCRCoverhead - m_L3overhead;
         break;
     case NetworkModel::Layer3:
-        m_udpSize = size                             - m_L3overhead;
+        tmp_size = size                             - m_L3overhead;
         break;
     case NetworkModel::Layer4:
-        m_udpSize = size;
+        tmp_size = size;
         break;
+    }
+
+    if (tmp_size < 0) {
+        m_udpSize = m_minUdpSize;
+    } else {
+        m_udpSize = tmp_size;
     }
 
     m_udpSize = qMax(qMin(m_udpSize, m_maxUdpSize), m_minUdpSize);
