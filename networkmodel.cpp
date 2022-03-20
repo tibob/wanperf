@@ -56,7 +56,7 @@ uint NetworkModel::setPduSize(uint size, NetworkModel::Layer layer)
     m_udpSize = qMax(qMin(m_udpSize, m_maxUdpSize), m_minUdpSize);
 
     // recalculate pps
-    setBandwidth(m_udpBandwidth, NetworkModel::Layer4);
+    m_pps = (qreal) m_udpBandwidth / (m_udpSize * 8);
 
     return pduSize(layer);
 }
