@@ -39,7 +39,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->sizeLayer->addItem("Layer 1", QVariant(NetworkModel::Layer1));
     ui->sizeLayer->addItem("Layer 2", QVariant(NetworkModel::Layer2));
-    ui->sizeLayer->addItem("Layer 2 no CRC", QVariant(NetworkModel::Layer2));
+    ui->sizeLayer->addItem("Layer 2 no CRC", QVariant(NetworkModel::Layer2noCRC));
     ui->sizeLayer->addItem("Layer 3", QVariant(NetworkModel::Layer3));
     ui->sizeLayer->addItem("Layer 4", QVariant(NetworkModel::Layer4));
     ui->sizeLayer->setCurrentIndex(4);
