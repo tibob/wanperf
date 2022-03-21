@@ -48,6 +48,7 @@ MainWindow::MainWindow(QWidget *parent) :
     senderListModel->insertRow(0);
 
     ui->udpSenderView->resizeColumnsToContents();
+    ui->udpSenderView->resizeRowsToContents();
     ui->udpSenderView->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     ui->udpSenderView->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
 
@@ -97,6 +98,9 @@ void MainWindow::on_btnStop_clicked()
 void MainWindow::on_insertUdpSender_clicked()
 {
     senderListModel->insertRow(senderListModel->rowCount());
+    // If we do not repaint first, it does not adjust the row height.
+    ui->udpSenderView->repaint();
+    ui->udpSenderView->resizeRowsToContents();
 }
 
 void MainWindow::on_removeUdpSender_clicked()

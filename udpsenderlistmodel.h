@@ -56,8 +56,8 @@ private:
         COL_DSCP,
         COL_SIZE,
         /* Statistics */
-        COL_SENDINGRATE,
-        COL_RECEIVINGRATE,
+        COL_SENDINGSTATS,
+        COL_RECEIVINGSTATS,
         COL_PACKETLOST,
         // COL_COUNT has to be the last enumerator, as it is the count of columns
         COL_COUNT

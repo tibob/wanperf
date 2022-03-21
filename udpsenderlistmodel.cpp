@@ -37,8 +37,8 @@ QVariant UdpSenderListModel::data(const QModelIndex &index, int role) const
 
     if (role == Qt::TextAlignmentRole) {
         switch (index.column()) {
-            case COL_SENDINGRATE:
-            case COL_RECEIVINGRATE:
+            case COL_SENDINGSTATS:
+            case COL_RECEIVINGSTATS:
                 return Qt::AlignRight;
             default:
                 return Qt::AlignLeft;
@@ -48,28 +48,55 @@ QVariant UdpSenderListModel::data(const QModelIndex &index, int role) const
     if (role != Qt::DisplayRole && role != Qt::EditRole)
         return QVariant();
 
-    QLocale locale = QLocale();
+    // l is the current locale. As we have pretty long lines, l is shorter ;-)
+    QLocale l = QLocale();
+    // s is the current sender. As we have pretty long lines, s is shorter ;-)
+    UdpSender *s = udpSenderList[index.row()];
+    QString tmpText = "";
 
     switch (index.column()) {
         case COL_NAME:
-            return udpSenderList[index.row()]->name();
+            return s->name();
         case COL_DSCP:
-            return udpSenderList[index.row()]->dscp();
+            return s->dscp();
         case COL_BANDWIDTH:
-            return locale.toString((qreal) udpSenderList[index.row()]->specifiedBandwidth(m_BandwidthLayer) / m_BandwidthUnit,
+            return l.toString((qreal) s->specifiedBandwidth(m_BandwidthLayer) / m_BandwidthUnit,
                     'f', QLocale::FloatingPointShortest);
         case COL_PORT:
-            return udpSenderList[index.row()]->port();
+            return s->port();
         case COL_SIZE:
-            return locale.toString(udpSenderList[index.row()]->specifiedPduSize(m_PDUSizeLayer));
-        case COL_SENDINGRATE:
-            return locale.toString((qreal) udpSenderList[index.row()]->sendingBandwidth(m_BandwidthLayer) / m_BandwidthUnit,
-                    'f', 2);
-        case COL_RECEIVINGRATE:
-            return locale.toString((qreal) udpSenderList[index.row()]->receivingBandwidth(m_BandwidthLayer) / m_BandwidthUnit,
+            return l.toString(s->specifiedPduSize(m_PDUSizeLayer));
+        case COL_SENDINGSTATS:
+            tmpText += "L1 " +
+              l.toString((qreal) s->sendingBandwidth(NetworkModel::Layer1) / m_BandwidthUnit, 'f', 2) + "\n";
+            tmpText += "L2 " +
+              l.toString((qreal) s->sendingBandwidth(NetworkModel::Layer2) / m_BandwidthUnit, 'f', 2) + "\n";
+            tmpText += "L2noCRC " +
+              l.toString((qreal) s->sendingBandwidth(NetworkModel::Layer2noCRC) / m_BandwidthUnit, 'f', 2) + "\n";
+            tmpText += "IP " +
+              l.toString((qreal) s->sendingBandwidth(NetworkModel::Layer3) / m_BandwidthUnit, 'f', 2) + "\n";
+            tmpText += "UDP " +
+              l.toString((qreal) s->sendingBandwidth(NetworkModel::Layer4) / m_BandwidthUnit, 'f', 2) + "\n";
+            tmpText += "pps " + l.toString(s->sendingPps());
+            return tmpText;
+        case COL_RECEIVINGSTATS:
+            tmpText += "L1 " +
+              l.toString((qreal) s->receivingBandwidth(NetworkModel::Layer1) / m_BandwidthUnit, 'f', 2) + "\n";
+            tmpText += "L2 " +
+              l.toString((qreal) s->receivingBandwidth(NetworkModel::Layer2) / m_BandwidthUnit, 'f', 2) + "\n";
+            tmpText += "L2noCRC " +
+              l.toString((qreal) s->receivingBandwidth(NetworkModel::Layer2noCRC) / m_BandwidthUnit, 'f', 2) + "\n";
+            tmpText += "IP " +
+              l.toString((qreal) s->receivingBandwidth(NetworkModel::Layer3) / m_BandwidthUnit, 'f', 2) + "\n";
+            tmpText += "UDP " +
+              l.toString((qreal) s->receivingBandwidth(NetworkModel::Layer4) / m_BandwidthUnit, 'f', 2) + "\n";
+            tmpText += "pps " + l.toString(s->receivingPps());
+            return tmpText;
+
+            return l.toString((qreal) s->receivingBandwidth(m_BandwidthLayer) / m_BandwidthUnit,
                     'f', 2);
         case COL_PACKETLOST:
-            return locale.toString(udpSenderList[index.row()]->packetLost());
+            return l.toString(s->packetLost());
     }
     return QVariant();
 }
@@ -95,9 +122,9 @@ QVariant UdpSenderListModel::headerData(int section, Qt::Orientation orientation
             return "UDP Port";
         case COL_SIZE:
             return NetworkModel::layerShortName(m_PDUSizeLayer) + " specified PDU Size";
-        case COL_SENDINGRATE:
+        case COL_SENDINGSTATS:
             return "Sending bandwidth";
-        case COL_RECEIVINGRATE:
+        case COL_RECEIVINGSTATS:
             return "Receiving bandwidth";
         case COL_PACKETLOST:
             return "Packets Lost";
@@ -158,10 +185,10 @@ Qt::ItemFlags UdpSenderListModel::flags(const QModelIndex &index) const
         return Qt::ItemIsEnabled;
 
     // These columns are not editable
-    if (index.column() == COL_SENDINGRATE
-            || index.column() == COL_RECEIVINGRATE
+    if (index.column() == COL_SENDINGSTATS
+            || index.column() == COL_RECEIVINGSTATS
             || index.column() == COL_PACKETLOST) {
-        return Qt::ItemIsSelectable | Qt::ItemIsEnabled;
+        return Qt::ItemIsSelectable;
     }
 
     if (m_isGeneratingTraffic) {
@@ -348,5 +375,5 @@ int UdpSenderListModel::totalPpsReceived()
 
 void UdpSenderListModel::updateStats()
 {
-    emit dataChanged(index(0, COL_SENDINGRATE), index(rowCount()-1, COL_PACKETLOST));
+    emit dataChanged(index(0, COL_SENDINGSTATS), index(rowCount()-1, COL_PACKETLOST));
 }
