@@ -21,14 +21,47 @@
        <string>Konfiguration</string>
       </property>
       <layout class="QGridLayout" name="gridLayout_2">
-       <item row="0" column="0">
-        <widget class="QLabel" name="label">
+       <item row="0" column="2">
+        <widget class="QLineEdit" name="destinationHost">
          <property name="text">
-          <string>Destination</string>
+          <string>192.168.0.120</string>
          </property>
         </widget>
        </item>
-       <item row="0" column="3">
+       <item row="2" column="5">
+        <spacer name="horizontalSpacer_5">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="3" column="5">
+        <spacer name="horizontalSpacer_4">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="2" column="4">
+        <widget class="QLabel" name="label_18">
+         <property name="text">
+          <string>Size for PDU-Layer:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="3" colspan="3">
         <spacer name="horizontalSpacer_7">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
@@ -41,21 +74,8 @@
          </property>
         </spacer>
        </item>
-       <item row="0" column="4" rowspan="4">
+       <item row="0" column="6" rowspan="4">
         <layout class="QGridLayout" name="gridLayout">
-         <item row="0" column="0" rowspan="2">
-          <spacer name="horizontalSpacer_2">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>40</width>
-             <height>20</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
          <item row="0" column="1">
           <widget class="QPushButton" name="btnGenerate">
            <property name="text">
@@ -93,44 +113,50 @@
            </property>
           </spacer>
          </item>
+         <item row="0" column="0" rowspan="2">
+          <spacer name="horizontalSpacer_2">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
         </layout>
        </item>
-       <item row="1" column="0" colspan="2">
-        <widget class="QLabel" name="label_10">
+       <item row="0" column="0">
+        <widget class="QLabel" name="label">
          <property name="text">
-          <string>Edit/Display Bandwidth in</string>
+          <string>Destination</string>
          </property>
         </widget>
        </item>
-       <item row="1" column="2">
-        <widget class="QComboBox" name="bandwidthUnit"/>
+       <item row="3" column="4">
+        <widget class="QComboBox" name="sizeLayer"/>
        </item>
-       <item row="2" column="0" colspan="2">
+       <item row="2" column="0">
         <widget class="QLabel" name="label_11">
          <property name="text">
-          <string>Edit Bandwidth for PDU-Layer</string>
+          <string>Bandwidth for PDU-Layer:</string>
          </property>
         </widget>
        </item>
-       <item row="2" column="2">
+       <item row="3" column="0">
         <widget class="QComboBox" name="bandwidthLayer"/>
        </item>
-       <item row="3" column="0" colspan="2">
-        <widget class="QLabel" name="label_18">
+       <item row="2" column="2">
+        <widget class="QLabel" name="label_10">
          <property name="text">
-          <string>Edit Size for PDU-Layer</string>
+          <string>Bandwidth in:</string>
          </property>
         </widget>
        </item>
        <item row="3" column="2">
-        <widget class="QComboBox" name="sizeLayer"/>
-       </item>
-       <item row="0" column="2">
-        <widget class="QLineEdit" name="destinationHost">
-         <property name="text">
-          <string>192.168.0.120</string>
-         </property>
-        </widget>
+        <widget class="QComboBox" name="bandwidthUnit"/>
        </item>
       </layout>
      </widget>
@@ -147,22 +173,15 @@
        <string>Flows</string>
       </property>
       <layout class="QGridLayout" name="gridLayout_7">
-       <item row="0" column="0" colspan="3">
-        <widget class="QTableView" name="udpSenderView"/>
-       </item>
-       <item row="1" column="0">
-        <widget class="QPushButton" name="insertUdpSender">
-         <property name="text">
-          <string>New UDP sender</string>
-         </property>
-        </widget>
-       </item>
        <item row="1" column="1">
         <widget class="QPushButton" name="removeUdpSender">
          <property name="text">
           <string>Delete</string>
          </property>
         </widget>
+       </item>
+       <item row="0" column="0" colspan="3">
+        <widget class="QTableView" name="udpSenderView"/>
        </item>
        <item row="1" column="2">
         <spacer name="horizontalSpacer">
@@ -176,6 +195,13 @@
           </size>
          </property>
         </spacer>
+       </item>
+       <item row="1" column="0">
+        <widget class="QPushButton" name="insertUdpSender">
+         <property name="text">
+          <string>New UDP sender</string>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>

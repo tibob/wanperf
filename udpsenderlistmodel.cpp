@@ -127,7 +127,7 @@ QVariant UdpSenderListModel::headerData(int section, Qt::Orientation orientation
         case COL_RECEIVINGSTATS:
             return "Receiving bandwidth";
         case COL_PACKETLOST:
-            return "Packets Lost";
+            return "Packets lost";
 
     }
     return QVariant();
