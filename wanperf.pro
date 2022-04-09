@@ -30,4 +30,5 @@ HEADERS  += mainwindow.h \
 FORMS    += mainwindow.ui
 
 DISTFILES += \
+    LICENSE.txt \
     todo.txt
