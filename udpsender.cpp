@@ -16,8 +16,8 @@ UdpSender::UdpSender(QObject *parent) :
     setNetworkModel(NetworkModel());
 
     // Initialise PDU Size & Bandwidth to some Value
-    setBandwidth(10000, NetworkModel::Layer4);
-    setPduSize(500, NetworkModel::Layer4);
+    setBandwidth(1000000, NetworkModel::Layer2);
+    setPduSize(512, NetworkModel::Layer2);
 
     m_lastStats = QDateTime::currentMSecsSinceEpoch();
 
@@ -162,6 +162,16 @@ int UdpSender::packetLost()
     return m_PacketsLost;
 }
 
+int UdpSender::packetsSent()
+{
+    return m_PacketsSent;
+}
+
+int UdpSender::packetsReceived()
+{
+    return m_PacketsReceived;
+}
+
 void UdpSender::receiveStatistics(quint64 packetsLost, quint64 packetsSent, quint64 packetsReceived)
 {
     qint64 statTime = QDateTime::currentMSecsSinceEpoch();
@@ -173,7 +183,7 @@ void UdpSender::receiveStatistics(quint64 packetsLost, quint64 packetsSent, quin
         return;
     }
 
-    qint64 sendDelta = packetsSent - m_PacketsSend;
+    qint64 sendDelta = packetsSent - m_PacketsSent;
     qint64 receivedDelta = packetsReceived - m_PacketsReceived;
     qint64 timeDela = statTime - m_lastStats;
 
@@ -181,7 +191,7 @@ void UdpSender::receiveStatistics(quint64 packetsLost, quint64 packetsSent, quin
     m_receivedPps = 1000 * receivedDelta /timeDela;
 
     m_PacketsLost = packetsLost;
-    m_PacketsSend = packetsSent;
+    m_PacketsSent = packetsSent;
     m_PacketsReceived = packetsReceived;
     m_lastStats = statTime;
 }

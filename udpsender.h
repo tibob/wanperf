@@ -42,6 +42,8 @@ public:
     int sendingPps();
     int receivingPps();
     int packetLost();
+    int packetsSent();
+    int packetsReceived();
 
 signals:
     void statsChanged();
@@ -64,7 +66,7 @@ private:
 
     /***** Statistics *****/
     quint64 m_PacketsLost = 0;
-    quint64 m_PacketsSend = 0;
+    quint64 m_PacketsSent = 0;
     quint64 m_PacketsReceived = 0;
     qint64 m_lastStats;
     int m_sentPps = 0;

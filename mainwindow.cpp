@@ -28,13 +28,13 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->bandwidthLayer->addItem("Layer 2 no CRC", QVariant(NetworkModel::Layer2noCRC));
     ui->bandwidthLayer->addItem("Layer 3", QVariant(NetworkModel::Layer3));
     ui->bandwidthLayer->addItem("Layer 4", QVariant(NetworkModel::Layer4));
-    ui->bandwidthLayer->setCurrentIndex(4);
+    ui->bandwidthLayer->setCurrentIndex(1);
 
 
     ui->bandwidthUnit->addItem("bit/s", QVariant(static_cast<int>(1)));
     ui->bandwidthUnit->addItem("Kbit/s", QVariant(static_cast<int>(1000)));
     ui->bandwidthUnit->addItem("Mbit/s", QVariant(static_cast<int>(1000000)));
-    ui->bandwidthUnit->setCurrentIndex(0);
+    ui->bandwidthUnit->setCurrentIndex(2);
 
 
     ui->sizeLayer->addItem("Layer 1", QVariant(NetworkModel::Layer1));
@@ -42,7 +42,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->sizeLayer->addItem("Layer 2 no CRC", QVariant(NetworkModel::Layer2noCRC));
     ui->sizeLayer->addItem("Layer 3", QVariant(NetworkModel::Layer3));
     ui->sizeLayer->addItem("Layer 4", QVariant(NetworkModel::Layer4));
-    ui->sizeLayer->setCurrentIndex(4);
+    ui->sizeLayer->setCurrentIndex(1);
 
     //Initialise one flow
     senderListModel->insertRow(0);

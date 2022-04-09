@@ -2,6 +2,7 @@
 #include <QDateTime>
 #include <QtEndian>
 #include <QtGlobal>
+#include <QList>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -223,14 +224,25 @@ void UdpSenderThread::run()
     // Stats
     int t_statsPacketsReceived = 0;
     int t_statsPacketsLost = 0;
-    quint64 t_statsCummuledLatency = 0;
 
+    // We consider packets that did not come back after 2 seconds as lost.
+    // For this we have to keep track of the packet counters 2 seconds.
+    // As we check each Tc, we need an istory of (2 seconds / Tc) counters
+    QList<quint64> t_counterHistory;
+    int t_counterHistoryLength = 2000 / t_msecTc;
+    while (t_counterHistoryLength > 0) {
+        t_counterHistory.append(*t_sendingCounter);
+        t_counterHistoryLength--;
+    }
+    quint64 t_counterTimedOut;
+
+    quint64 t_latency;
+    quint64 t_statsCummuledLatency = 0;
 
     const qint64 t_statsReportInterval = 1000;
     // Report stats before next Tc
     qint64 t_statNextTime = t_msecNow + t_statsReportInterval - 5;
 
-    qint64 t_latency;
 
     /*****************************************************************
      * with poll we can check if the socket can be read or written to
@@ -314,7 +326,7 @@ void UdpSenderThread::run()
             emit statistics(t_statsPacketsLost, *t_sendingCounter, t_statsPacketsReceived);
 
             // Reset stat counter for next period.
-            // TODO: - when the stats a in synch with Tc, they slightly change in time
+            // TODO: - when the stats are in sync with Tc, they slightly change in time
 //            t_statNextTime = t_msecNow + t_statsReportInterval;
             t_statNextTime += t_statsReportInterval;
         }
@@ -328,6 +340,15 @@ void UdpSenderThread::run()
         if (t_msecNextRefill <= t_msecNow) {
             t_msecNextRefill += t_msecTc;
             t_packetBucket = t_packetsBc;
+
+            // Keep track of counter history
+            t_counterHistory.append(*t_sendingCounter);
+            t_counterTimedOut = t_counterHistory.takeFirst();
+            if (t_counterTimedOut > t_counterAwaited) {
+                // The packets between t_counterAwaited and t_counterTimedOutare lost
+                t_statsPacketsLost = t_statsPacketsLost + (t_counterTimedOut - t_counterAwaited);
+                t_counterAwaited = t_counterTimedOut;
+            }
         }
 
         t_chunkCounter = qMin(t_packetBucket, t_chunkSize);

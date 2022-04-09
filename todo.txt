@@ -3,7 +3,8 @@ Stats:
 - Packet loss in %
 
 Whishlist
-- Remember last settings + save Flows
+- Stats jump when thread restarts - pause stats for 2 seconds?
+- Remember last settings (IP-Address, layer, flows) + save settings into a file
 - Use QHostInfo to do a DNS-Lookup on destinationHost
 - dynamic port numbers per flow (would be easier for the user, only the expert needs to set the udp port?
 - Pause one of the UdpEcho
@@ -23,7 +24,7 @@ Whishlist
 - Pretty cool would be an osciloscope - Send the same pattern repeatidly an look at the answer (how does the network reacts on burtsts?)
 - IPv6-Support - very low priority, IPv4 is fine for Network testing.
 - Give the Window a name, not "MainWindow" :-)
-- Stats jump when thread restarts - pause stats for 2 seconds?
+- Generate traffic and Stop traffic should be one button, wich changes its label (And color?). The "Idle" Status must be updated
 
 ############## udpecho #############
 - Filter on source IP Address

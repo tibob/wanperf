@@ -92,11 +92,16 @@ QVariant UdpSenderListModel::data(const QModelIndex &index, int role) const
               l.toString((qreal) s->receivingBandwidth(NetworkModel::Layer4) / m_BandwidthUnit, 'f', 2) + "\n";
             tmpText += "pps " + l.toString(s->receivingPps());
             return tmpText;
-
-            return l.toString((qreal) s->receivingBandwidth(m_BandwidthLayer) / m_BandwidthUnit,
-                    'f', 2);
-        case COL_PACKETLOST:
-            return l.toString(s->packetLost());
+        case COL_PACKETS:
+            int packetsSent= s->packetsSent();
+            int packetsReceived= s->packetsReceived();
+            int packetsLost = s->packetLost();
+            qreal percent = (qreal) packetsLost * 100 / packetsSent;
+            tmpText += "Packets sent: " + l.toString(packetsSent) + "\n";
+            tmpText += "Packets received: " + l.toString(packetsReceived) + "\n";
+            tmpText += "Packets lost: " + l.toString(packetsLost) + "\n";
+            tmpText += "Percent: " + l.toString(percent) + "%";
+            return tmpText;
     }
     return QVariant();
 }
@@ -116,7 +121,6 @@ QVariant UdpSenderListModel::headerData(int section, Qt::Orientation orientation
         case COL_DSCP:
             return "DSCP Value";
         case COL_BANDWIDTH:
-        // FIXME: we need a Network Model for the whole application, not for every udpSender
             return NetworkModel::layerShortName(m_BandwidthLayer) + " specified Bandwidth";
         case COL_PORT:
             return "UDP Port";
@@ -126,8 +130,8 @@ QVariant UdpSenderListModel::headerData(int section, Qt::Orientation orientation
             return "Sending bandwidth";
         case COL_RECEIVINGSTATS:
             return "Receiving bandwidth";
-        case COL_PACKETLOST:
-            return "Packets lost";
+        case COL_PACKETS:
+            return "Packets";
 
     }
     return QVariant();
@@ -187,7 +191,7 @@ Qt::ItemFlags UdpSenderListModel::flags(const QModelIndex &index) const
     // These columns are not editable
     if (index.column() == COL_SENDINGSTATS
             || index.column() == COL_RECEIVINGSTATS
-            || index.column() == COL_PACKETLOST) {
+            || index.column() == COL_PACKETS) {
         return Qt::ItemIsSelectable;
     }
 
@@ -375,5 +379,5 @@ int UdpSenderListModel::totalPpsReceived()
 
 void UdpSenderListModel::updateStats()
 {
-    emit dataChanged(index(0, COL_SENDINGSTATS), index(rowCount()-1, COL_PACKETLOST));
+    emit dataChanged(index(0, COL_SENDINGSTATS), index(rowCount()-1, COL_PACKETS));
 }

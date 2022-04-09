@@ -58,7 +58,7 @@ private:
         /* Statistics */
         COL_SENDINGSTATS,
         COL_RECEIVINGSTATS,
-        COL_PACKETLOST,
+        COL_PACKETS,
         // COL_COUNT has to be the last enumerator, as it is the count of columns
         COL_COUNT
     };
