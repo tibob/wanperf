@@ -1,6 +1,5 @@
 Stats:
 - WAN extrapolation
-- Packet loss in %
 
 Whishlist
 - Stats jump when thread restarts - pause stats for 2 seconds?
