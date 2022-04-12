@@ -28,7 +28,6 @@ public slots:
     void on_bandwidthUnit_currentIndexChanged(int index);
 
     void on_btnGenerate_clicked();
-    void on_btnStop_clicked();
 
     void updateGlobalStats();
 
@@ -50,6 +49,7 @@ private:
     // use locale to display numbers correctly
     QLocale locale;
 
+    bool m_generating = false;
 };
 
 #endif // MAINWINDOW_H

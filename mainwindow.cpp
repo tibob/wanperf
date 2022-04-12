@@ -70,29 +70,30 @@ MainWindow::~MainWindow()
  */
 void MainWindow::on_btnGenerate_clicked()
 {
-    senderListModel->stopAllSender();
+    if (m_generating) {
+        senderListModel->stopAllSender();
+        ui->destinationHost->setEnabled(true);
+        ui->btnGenerate->setText("Generate traffic");
+        ui->btnGenerate->setStyleSheet("");
+        m_generating = false;
+    } else {
+        QHostAddress destinationIP = QHostAddress(ui->destinationHost->text());
 
-    QHostAddress destinationIP = QHostAddress(ui->destinationHost->text());
-
-    if (destinationIP.protocol() != QAbstractSocket::IPv4Protocol) {
-        // we only work with IPv4
-        ui->lbStatus->setText("Not an IPv4 Address");
+        // TODO: we should check this bevor starting generating
+        if (destinationIP.protocol() != QAbstractSocket::IPv4Protocol) {
+            // we only work with IPv4
+            ui->lbStatus->setText("Not an IPv4 Address");
+            return;
+        } else {
+            ui->lbStatus->setText("");
+        }
+        ui->destinationHost->setEnabled(false);
+        senderListModel->setDestinationIP(destinationIP);
+        senderListModel->generateTraffic();
+        ui->btnGenerate->setText("Stop traffic");
+        ui->btnGenerate->setStyleSheet("background-color: red");
+        m_generating = true;
     }
-
-    ui->destinationHost->setEnabled(false);
-
-    senderListModel->setDestinationIP(destinationIP);
-    senderListModel->generateTraffic();
-}
-
-void MainWindow::on_btnStop_clicked()
-{
-
-    senderListModel->stopAllSender();
-
-    ui->lbStatus->setText("Idle");
-
-    ui->destinationHost->setEnabled(true);
 }
 
 void MainWindow::on_insertUdpSender_clicked()
