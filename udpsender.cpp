@@ -25,6 +25,12 @@ UdpSender::UdpSender(QObject *parent) :
             this,      SLOT(receiveStatistics(quint64,quint64,quint64)));
 }
 
+UdpSender::~UdpSender()
+{
+    // be sure to stop the thread or get a segfault.
+    m_thread.stop();
+}
+
 void UdpSender::setNetworkModel(NetworkModel model)
 {
     m_networkModel = model;

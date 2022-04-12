@@ -218,10 +218,9 @@ bool UdpSenderListModel::insertRows(int position, int rows, const QModelIndex &/
         sender = new UdpSender();
 
         udpSenderList.insert(position, sender);
-        /* Be sure that the sender has its Bandwidth stored in the same Layer als the UI
-         * This is to avoid the Bandwidth to change when the PDU Size is changed *
-         */
-        sender->setBandwidth(sender->specifiedBandwidth(m_BandwidthLayer), m_BandwidthLayer);
+        if (m_isGeneratingTraffic) {
+            sender->startTraffic();
+        }
     }
 
     endInsertRows();

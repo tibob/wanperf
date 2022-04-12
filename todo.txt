@@ -1,7 +1,6 @@
 TODO:
 - Sender thread - as CPU is not the problem, can we get ride of the chunks?
-- Sender threaf - begin with stats would produce stats before te next Tc refill
-- Adding / removing sending threads while generating traffic (now: delete = crash)
+- Sender thread - begin with stats would produce stats before te next Tc refill
 
 Whishlist:
 - Stats jump when thread restarts - pause stats for 2 seconds?

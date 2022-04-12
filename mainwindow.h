@@ -49,7 +49,7 @@ private:
     // use locale to display numbers correctly
     QLocale locale;
 
-    bool m_generating = false;
+    bool m_isGeneratingTraffic = false;
 };
 
 #endif // MAINWINDOW_H

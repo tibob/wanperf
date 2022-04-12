@@ -70,12 +70,12 @@ MainWindow::~MainWindow()
  */
 void MainWindow::on_btnGenerate_clicked()
 {
-    if (m_generating) {
+    if (m_isGeneratingTraffic) {
         senderListModel->stopAllSender();
         ui->destinationHost->setEnabled(true);
         ui->btnGenerate->setText("Generate traffic");
         ui->btnGenerate->setStyleSheet("");
-        m_generating = false;
+        m_isGeneratingTraffic = false;
     } else {
         QHostAddress destinationIP = QHostAddress(ui->destinationHost->text());
 
@@ -92,7 +92,7 @@ void MainWindow::on_btnGenerate_clicked()
         senderListModel->generateTraffic();
         ui->btnGenerate->setText("Stop traffic");
         ui->btnGenerate->setStyleSheet("background-color: red");
-        m_generating = true;
+        m_isGeneratingTraffic = true;
     }
 }
 

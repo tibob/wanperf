@@ -14,6 +14,7 @@ class UdpSender : public QObject
     Q_OBJECT
 public:
     explicit UdpSender(QObject *parent = nullptr);
+    ~UdpSender();
 //    Packet Length
     void setNetworkModel(NetworkModel model);
     NetworkModel networkModel();
