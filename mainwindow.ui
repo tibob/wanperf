@@ -21,6 +21,16 @@
        <string>Konfiguration</string>
       </property>
       <layout class="QGridLayout" name="gridLayout">
+       <item row="2" column="2">
+        <widget class="QComboBox" name="sizeLayer"/>
+       </item>
+       <item row="1" column="2">
+        <widget class="QLabel" name="label_18">
+         <property name="text">
+          <string>Size for PDU-Layer:</string>
+         </property>
+        </widget>
+       </item>
        <item row="0" column="0">
         <widget class="QLabel" name="label">
          <property name="text">
@@ -31,37 +41,24 @@
        <item row="0" column="1">
         <widget class="QLineEdit" name="destinationHost">
          <property name="text">
-          <string>10.1.3.120</string>
+          <string>192.168.0.120</string>
          </property>
         </widget>
        </item>
-       <item row="0" column="2">
-        <widget class="QLabel" name="lbStatus">
-         <property name="layoutDirection">
-          <enum>Qt::LeftToRight</enum>
-         </property>
+       <item row="2" column="0">
+        <widget class="QComboBox" name="bandwidthLayer"/>
+       </item>
+       <item row="1" column="1">
+        <widget class="QLabel" name="label_10">
          <property name="text">
-          <string>Idle</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+          <string>Bandwidth in:</string>
          </property>
         </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QComboBox" name="bandwidthUnit"/>
        </item>
        <item row="0" column="4">
-        <spacer name="horizontalSpacer_7">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>459</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item row="0" column="5">
         <widget class="QPushButton" name="btnGenerate">
          <property name="text">
           <string>Generate traffic</string>
@@ -75,50 +72,27 @@
          </property>
         </widget>
        </item>
-       <item row="1" column="1">
-        <widget class="QLabel" name="label_10">
+       <item row="0" column="2">
+        <widget class="QLabel" name="lbStatus">
+         <property name="layoutDirection">
+          <enum>Qt::LeftToRight</enum>
+         </property>
          <property name="text">
-          <string>Bandwidth in:</string>
+          <string/>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
          </property>
         </widget>
        </item>
-       <item row="1" column="2">
-        <widget class="QLabel" name="label_18">
-         <property name="text">
-          <string>Size for PDU-Layer:</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="3">
-        <spacer name="horizontalSpacer_5">
+       <item row="0" column="3">
+        <spacer name="horizontalSpacer_7">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
-           <width>40</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item row="2" column="0">
-        <widget class="QComboBox" name="bandwidthLayer"/>
-       </item>
-       <item row="2" column="1">
-        <widget class="QComboBox" name="bandwidthUnit"/>
-       </item>
-       <item row="2" column="2">
-        <widget class="QComboBox" name="sizeLayer"/>
-       </item>
-       <item row="2" column="3">
-        <spacer name="horizontalSpacer_4">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>40</width>
+           <width>459</width>
            <height>20</height>
           </size>
          </property>
