@@ -1,6 +1,4 @@
 TODO:
-- Sender thread - as CPU is not the problem, can we get ride of the chunks?
-- Sender thread - begin with stats would produce stats before te next Tc refill
 - Adding a thread - no receiving bandwidth
 - Changing PDU Size changes the bandwidth
 
@@ -17,14 +15,10 @@ Whishlist:
    - WAN extrapolation
    - The encapsulations sould be customisable
 - Make Packet-sending intervall Tc customisable per UDP-Sender
-- Tune performance:
-    - 60 Mbit/s (L2) with 64-Bytes-Frames and 0,1% loss => More Threads per Flow?
-    - 1 Gbit(s (L1) with 1518-Bytes-Frames, 0% loss
-    - 500 Mbit/s (L2) with 512-Bytes-Frames; 0% loss => More Threads per Flow?
-    - I sometimes get a small amount of packet loss, but I'm not sure were there are from.
+- Tune performance / look at what produces CPU Load in thread
+- Tune performance / multiple threads per flow
 - Pretty cool would be an osciloscope - Send the same pattern repeatidly an look at the answer (how does the network reacts on bursts?)
-- IPv6-Support - very low priority, IPv4 is fine for Network testing.
-- Remember last 10 destinations
+- IPv6-Support - very low priority, IPv4 is fine for network testing.
 
 ############## udpecho #############
 TODO

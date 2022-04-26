@@ -214,12 +214,8 @@ void UdpSenderThread::run()
     // delta between awaited counter and received counter
     int t_counterDelta;
 
-    const int t_chunkSize = 10;
-    int t_chunkCounter;
-
     // Timestamp in the returned UDP datagram
     qint64 t_msecReturned;
-
 
     // Stats
     int t_statsPacketsReceived = 0;
@@ -227,7 +223,7 @@ void UdpSenderThread::run()
 
     // We consider packets that did not come back after 2 seconds as lost.
     // For this we have to keep track of the packet counters 2 seconds.
-    // As we check each Tc, we need an istory of (2 seconds / Tc) counters
+    // As we check each Tc, we need an history of (2 seconds / Tc) counters
     QList<quint64> t_counterHistory;
     int t_counterHistoryLength = 2000 / t_msecTc;
     while (t_counterHistoryLength > 0) {
@@ -240,12 +236,12 @@ void UdpSenderThread::run()
     quint64 t_statsCummuledLatency = 0;
 
     const qint64 t_statsReportInterval = 1000;
-    // Report stats before next Tc
-    qint64 t_statNextTime = t_msecNow + t_statsReportInterval - 5;
+    // Report stats before next Tc. Doing so 1 ms before Tc makes stats less jumpy
+    qint64 t_statNextTime = t_msecNow + t_statsReportInterval - 1;
 
 
     /*****************************************************************
-     * with poll we can check if the socket can be read or written to
+     * With poll we can check if the socket can be read or written to.
      * We need two different structures: one only for reading and one for reading and writing.
      */
     struct pollfd t_pollRead;
@@ -274,14 +270,29 @@ void UdpSenderThread::run()
         m_Mutex.unlock();
 
         /********************************************************************
-        * First step: receive as much packets as possible, in order to clear the buffers.
-        * We begin with receiving becaue we do not want packet drops comming from overfull receiving buffers.
-        * With the chunk, we alternate sending and reciving. But we give reciving a bigger chunk, because we do
-        * not want to have packet loss because of to small buffers.
+        * First step: emit stats (once per second)
+        * We do this before we send new packets and hope to get stats that
+        * do not vary to much in time.
+        *********************************************************************/
+        t_msecNow = QDateTime::currentMSecsSinceEpoch();
+        if (t_statNextTime < t_msecNow) {
+
+            // The signal will be send to the main thread, this is qt magic and is thread-safe :-)
+            // FIXME: Latency not sended
+            emit statistics(t_statsPacketsLost, *t_sendingCounter, t_statsPacketsReceived);
+
+            // Next stats in t_statsReportInterval
+            t_statNextTime += t_statsReportInterval;
+        }
+
+        /********************************************************************
+        * Second step: receive as much packets as possible, in order to clear the buffers.
+        * We begin with receiving because we do not want packet drops comming from overfull receiving buffers.
+        * We might not reach the wanted bandwidth because we recive to much at a time. But leaving packets
+        * in the receiving Buffer could produce unwanted packet loss.
         * As soon as there is nothing to receive, recv will return -1 and we go on to second step.
         ********************************************************************/
-        t_chunkCounter = 5 * t_chunkSize;
-        while (t_chunkCounter > 0) {
+        while (true) {
             t_packetSize = recv(t_udpSocket, &t_datagramReceive, t_datagramSDULength, 0);
             if (t_packetSize < 0) {
                 /* Error or buffers full (EAGAIN or EWOULDBLOCK) => stop
@@ -310,30 +321,15 @@ void UdpSenderThread::run()
                 // We have a Packet duplication or a reordered packet => we ignore it
                 qDebug("Dup or reordered!");
             }
-            t_chunkCounter--;
         }
 
-        /********************************************************************
-        * Second step: emit stats (once per second)
-        * We do this befor we send new packets and hope to get better stats
-        * The problem is that the stats vary in time
-        *********************************************************************/
-        t_msecNow = QDateTime::currentMSecsSinceEpoch();
-        if (t_statNextTime < t_msecNow) {
 
-            // The signal will be send to the main thread, this is qt magic and is thread-safe :-)
-            // FIXME: Latency not sended
-            emit statistics(t_statsPacketsLost, *t_sendingCounter, t_statsPacketsReceived);
-
-            // Reset stat counter for next period.
-            // TODO: - when the stats are in sync with Tc, they slightly change in time
-//            t_statNextTime = t_msecNow + t_statsReportInterval;
-            t_statNextTime += t_statsReportInterval;
-        }
 
         /********************************************************************
-        * Third step: send as much packets as possible
+        * Third step: send one packet if needed
         * If the buffers are full, we get a negative result from sendto
+        * We only send one packet as we also want to receive packets in order to avoid packet loss
+        * This does cost some CPU time
         *********************************************************************/
         t_msecNow = QDateTime::currentMSecsSinceEpoch();
         // Do we need to refill our Bucket?
@@ -351,45 +347,40 @@ void UdpSenderThread::run()
             }
         }
 
-        t_chunkCounter = qMin(t_packetBucket, t_chunkSize);
-        while (t_chunkCounter > 0) {
+        if (t_packetBucket > 0) {
+            // The Bucket ist not empty, send one Datagram
             t_msecNow = QDateTime::currentMSecsSinceEpoch();
             qToBigEndian(t_msecNow, reinterpret_cast<uchar *>(t_datagramSend));
             t_packetSize = sendto(t_udpSocket, &t_datagramSend, t_datagramSDULength, 0,
                                  (struct sockaddr *)&t_destAddress, t_destAddressLen);
-            if (t_packetSize < 0) {
-                /* Error or buffers full (EAGAIN or EWOULDBLOCK) => stop sending for now */
-                break;
-            }
-            *t_sendingCounter = *t_sendingCounter + 1;
-            // NOTE: Maybe optimisation here (only decerease packetBucker an run the while against a limit)
-            t_packetBucket--;
-            t_chunkCounter--;
+            if (t_packetSize >= 0) {
+                // One packet was sent
+                *t_sendingCounter = *t_sendingCounter + 1;
+                t_packetBucket--;
+            } //else: Error or buffers full (EAGAIN or EWOULDBLOCK) => try again next time
         }
 
-
-
-
         /*****************************************/
-        // Sleep for a while. We use a very slow sleep time as linux has very small udp recieve buffers
-        // FIXME: use bigger buffers when available an inform user how to improve performance.
-//        msleep(1);
-
-        // FIXME - Listen to the socket until a packet is received, I need to send an a packet ca be send or timeout (next Tc-Time)
+        /* Last step: Maybe sleep for a while
+         *****************************************/
 
         t_msecNow = QDateTime::currentMSecsSinceEpoch();
-        // wait until we refill our bucket or we have to send stats
-        if (t_msecNextRefill < t_statNextTime) {
+        // Wait until we refill our bucket or we have to send stats
+        if (t_msecNextRefill <= t_statNextTime) {
+            // We first need to refill
             t_msecDelta = t_msecNextRefill - t_msecNow;
         } else {
+            // We first need to send stats
             t_msecDelta = t_statNextTime - t_msecNow;
         }
         if (t_msecDelta > 0) {
-            if (t_packetBucket >0) {
+            // we could wait but,
+            // we only sleep when there is nothing to do
+            if (t_packetBucket > 0) {
                 // we still have something to send
                 poll(&t_pollReadWrite, 1, t_msecDelta);
             } else {
-                // we just wait for udp echos
+                // we just wait for udp echos (replies)
                 poll(&t_pollRead, 1, t_msecDelta);
             }
         }
