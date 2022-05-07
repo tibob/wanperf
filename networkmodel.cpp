@@ -35,7 +35,8 @@ NetworkModel::NetworkModel()
 
 uint NetworkModel::setPduSize(uint size, NetworkModel::Layer layer)
 {
-    int tmp_size;
+    // Assign a value to tmp_size in order to avoid a warning.
+    int tmp_size = size;
 
     switch(layer) {
     case NetworkModel::Layer1:

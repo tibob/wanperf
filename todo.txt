@@ -8,6 +8,7 @@ Whishlist:
 - Pause one of the UdpEcho
 - Change every parameter of flows while sending
 - "Ping" Saellite (udp echo port 7/UDP)
+- When Destination is in the same VLAN and does not respond (no ARP Reply), the sending bandwidth is not 0
 - Graph the results with QCustomPlot // New QGraph
 - Choose DSCP from List (EF...)
 - Add latency as a statistic
