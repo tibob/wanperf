@@ -16,7 +16,6 @@ Whishlist:
    - WAN extrapolation
    - The encapsulations sould be customisable
 - Make Packet-sending intervall Tc customisable per UDP-Sender
-- Tune performance / look at what produces CPU Load in thread
 - Tune performance / multiple threads per flow
 - Pretty cool would be an osciloscope - Send the same pattern repeatidly an look at the answer (how does the network reacts on bursts?)
 - IPv6-Support - very low priority, IPv4 is fine for network testing.
