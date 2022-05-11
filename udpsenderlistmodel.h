@@ -37,11 +37,10 @@ public:
 
     // Statistics
     qreal totalSpecifiedBandwidth(NetworkModel::Layer layer);
-    qreal totalSendingBandwidth(NetworkModel::Layer layer);
-    qreal totalReceivingBandwidth(NetworkModel::Layer layer);
-    int totalPacketLost();
-    int totalPpsSent();
-    int totalPpsReceived();
+    QString totalSendingStats();
+    QString totalReceivingStats();
+    QString totalPacketsStats();
+
 
 public slots:
     void updateStats();

@@ -321,59 +321,140 @@ qreal UdpSenderListModel::totalSpecifiedBandwidth(NetworkModel::Layer layer)
     return totalBandwidth;
 }
 
-qreal UdpSenderListModel::totalSendingBandwidth(NetworkModel::Layer layer)
+QString UdpSenderListModel::totalSendingStats()
 {
-    qreal totalBandwidth = 0;
-    UdpSender *sender;
-    foreach (sender, udpSenderList) {
-        totalBandwidth += sender->sendingBandwidth(layer);
-    }
+    QString tmpText = "";
+    UdpSender *s;
+    QLocale l;
+    qreal bw;
+    int pps;
 
-    return totalBandwidth;
+    bw = 0;
+    foreach (s, udpSenderList) {
+        bw += s->sendingBandwidth(NetworkModel::Layer1);
+    }
+    bw = bw / m_BandwidthUnit;
+    tmpText += "L1 " + l.toString(bw, 'f', 2) + "\n";
+
+    bw = 0;
+    foreach (s, udpSenderList) {
+        bw += s->sendingBandwidth(NetworkModel::Layer2);
+    }
+    bw = bw / m_BandwidthUnit;
+    tmpText += "L2 " + l.toString(bw, 'f', 2) + "\n";
+
+    bw = 0;
+    foreach (s, udpSenderList) {
+        bw += s->sendingBandwidth(NetworkModel::Layer2noCRC);
+    }
+    bw = bw / m_BandwidthUnit;
+    tmpText += "L2noCRC " + l.toString(bw, 'f', 2) + "\n";
+
+    bw = 0;
+    foreach (s, udpSenderList) {
+        bw += s->sendingBandwidth(NetworkModel::Layer3);
+    }
+    bw = bw / m_BandwidthUnit;
+    tmpText += "IP " + l.toString(bw, 'f', 2) + "\n";
+
+    bw = 0;
+    foreach (s, udpSenderList) {
+        bw += s->sendingBandwidth(NetworkModel::Layer4);
+    }
+    bw = bw / m_BandwidthUnit;
+    tmpText += "UDP " + l.toString(bw, 'f', 2) + "\n";
+
+    pps = 0;
+    foreach (s, udpSenderList) {
+        pps += s->sendingPps();
+    }
+    tmpText += "pps " + l.toString(pps);
+
+
+    return tmpText;
 }
 
-qreal UdpSenderListModel::totalReceivingBandwidth(NetworkModel::Layer layer)
+QString UdpSenderListModel::totalReceivingStats()
 {
-    qreal totalBandwidth = 0;
-    UdpSender *sender;
-    foreach (sender, udpSenderList) {
-        totalBandwidth += sender->receivingBandwidth(layer);
-    }
+    QString tmpText = "";
+    UdpSender *s;
+    QLocale l;
+    qreal bw;
+    int pps;
 
-    return totalBandwidth;
+    bw = 0;
+    foreach (s, udpSenderList) {
+        bw += s->receivingBandwidth(NetworkModel::Layer1);
+    }
+    bw = bw / m_BandwidthUnit;
+    tmpText += "L1 " + l.toString(bw, 'f', 2) + "\n";
+
+    bw = 0;
+    foreach (s, udpSenderList) {
+        bw += s->receivingBandwidth(NetworkModel::Layer2);
+    }
+    bw = bw / m_BandwidthUnit;
+    tmpText += "L2 " + l.toString(bw, 'f', 2) + "\n";
+
+    bw = 0;
+    foreach (s, udpSenderList) {
+        bw += s->receivingBandwidth(NetworkModel::Layer2noCRC);
+    }
+    bw = bw / m_BandwidthUnit;
+    tmpText += "L2noCRC " + l.toString(bw, 'f', 2) + "\n";
+
+    bw = 0;
+    foreach (s, udpSenderList) {
+        bw += s->receivingBandwidth(NetworkModel::Layer3);
+    }
+    bw = bw / m_BandwidthUnit;
+    tmpText += "IP " + l.toString(bw, 'f', 2) + "\n";
+
+    bw = 0;
+    foreach (s, udpSenderList) {
+        bw += s->receivingBandwidth(NetworkModel::Layer4);
+    }
+    bw = bw / m_BandwidthUnit;
+    tmpText += "UDP " + l.toString(bw, 'f', 2) + "\n";
+
+    pps = 0;
+    foreach (s, udpSenderList) {
+        pps += s->receivingPps();
+    }
+    tmpText += "pps " + l.toString(pps);
+
+
+    return tmpText;
 }
 
-int UdpSenderListModel::totalPacketLost()
+QString UdpSenderListModel::totalPacketsStats()
 {
-    int totalLost = 0;
-    UdpSender *sender;
-    foreach (sender, udpSenderList) {
-        totalLost += sender->packetLost();
+    QString tmpText = "";
+    UdpSender *s;
+    QLocale l;
+
+    int packetsSent = 0;
+    foreach (s, udpSenderList) {
+        packetsSent += s->packetsSent();
     }
 
-    return totalLost;
-}
-
-int UdpSenderListModel::totalPpsSent()
-{
-    int pps = 0;
-    UdpSender *sender;
-    foreach (sender, udpSenderList) {
-        pps += sender->sendingPps();
+    int packetsReceived = 0;
+    foreach (s, udpSenderList) {
+        packetsReceived += s->packetsReceived();
     }
 
-    return pps;
-}
-
-int UdpSenderListModel::totalPpsReceived()
-{
-    int pps = 0;
-    UdpSender *sender;
-    foreach (sender, udpSenderList) {
-        pps += sender->receivingPps();
+    int packetsLost = 0;
+    foreach (s, udpSenderList) {
+        packetsLost += s->packetLost();
     }
 
-    return pps;
+    qreal percent = (qreal) packetsLost * 100 / packetsSent;
+
+    tmpText += "Packets sent: " + l.toString(packetsSent) + "\n";
+    tmpText += "Packets received: " + l.toString(packetsReceived) + "\n";
+    tmpText += "Packets lost: " + l.toString(packetsLost) + "\n";
+    tmpText += "Percent: " + l.toString(percent) + "%";
+    return tmpText;
 }
 
 void UdpSenderListModel::updateStats()
