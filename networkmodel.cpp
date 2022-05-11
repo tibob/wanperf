@@ -30,7 +30,8 @@ NetworkModel::NetworkModel()
 
     // Initialize to something
     m_udpSize = 1000;
-    m_udpBandwidth = 100;
+    m_bandwidth = 100;
+    m_bandwidthLayer = NetworkModel::Layer2;
 }
 
 uint NetworkModel::setPduSize(uint size, NetworkModel::Layer layer)
@@ -64,8 +65,8 @@ uint NetworkModel::setPduSize(uint size, NetworkModel::Layer layer)
 
     m_udpSize = qMax(qMin(m_udpSize, m_maxUdpSize), m_minUdpSize);
 
-    // recalculate pps
-    m_pps = (qreal) m_udpBandwidth / (m_udpSize * 8);
+    // recalculate pps. We use the specified bandwidth in its specified layer
+    m_pps = (qreal) m_bandwidth / (pduSize(m_bandwidthLayer) * 8);
 
     return pduSize(layer);
 }
@@ -91,16 +92,17 @@ uint NetworkModel::pduSize(NetworkModel::Layer layer)
     return m_udpSize;
 }
 
-uint NetworkModel::setBandwidth(uint newBandwidth, NetworkModel::Layer layer)
+void NetworkModel::setBandwidth(uint newBandwidth, NetworkModel::Layer layer)
 {
     /* We never set m_udpSize to 0 */
     Q_ASSERT(m_udpSize != 0);
 
     m_pps = (qreal) newBandwidth / (pduSize(layer) * 8);
     // we round to the nearest integer. If we would not use qRound, it would round down
-    m_udpBandwidth = qRound(m_pps * m_udpSize * 8);
+    m_bandwidth = newBandwidth;
+    m_bandwidthLayer = layer;
 
-    return bandwidth(layer);
+    return;
 }
 
 uint NetworkModel::bandwidth(NetworkModel::Layer layer)

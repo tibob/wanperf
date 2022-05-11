@@ -7,9 +7,9 @@
 /*!
  * \brief The NetworkModel class is used to calculate bandwidth and PDU-Size between differen OSI-Layers
  *
- * Actually the NetworkModel class is very static an has two Networkmodells: Ethernet without VLAN and Ethernet with VLAN (dot1q).
+ * Actually the NetworkModel class is very static.
  * In the future, the NetworkModel may become dynamic in order to allow the user to specify his own Network Model with a lot of
- * different Layers (UDP over IP over Ethernet over MPLS over GRE over IPSec over IPv4 over GRE over IPv6 over Frame Relay and so on :-) )
+ * different Layers (Example: UDP over IP over Ethernet over MPLS over GRE over IPSec over IPv4 over Ethernet)
  *
  */
 
@@ -17,19 +17,6 @@ class NetworkModel
 {
 public:
     NetworkModel();
-
-    /*!
-     * \brief The NetworkType enum
-     *
-     * This enum defines the Network Type that will be used for the Model
-     *
-     * \value EthernetWithoutVLAN  A simple Ethernet Network without do1q VLAN tags
-     * \value EthernetWithVLAN     An Ethernet Network with dot1q VLAN tags
-     */
-    enum NetworkType {
-        EthernetWithoutVLAN,
-        EthernetWithVLAN
-    };
 
     enum Layer {
         Layer1 = 1,
@@ -48,7 +35,7 @@ public:
     uint setPduSize(uint size, NetworkModel::Layer layer);
     uint pduSize(NetworkModel::Layer layer);
 
-    uint setBandwidth(uint newBandwidth, NetworkModel::Layer layer);
+    void setBandwidth(uint newBandwidth, NetworkModel::Layer layer);
     uint bandwidth(NetworkModel::Layer layer);
 
     // Used to calculate the Bandwidth for Statistics
@@ -72,14 +59,18 @@ private:
 
     // Current udp Size & bandwith. These are the reference for converting into other Layers
     uint m_udpSize;
-    // Bandwidth in bits per second
+
+    // Specified bandwidth in bits per second. We must store the specified layer to, in order to keep the
+    // bandwidth at PDU Size changes
     uint m_udpBandwidth;
+    uint m_bandwidth;
+    NetworkModel::Layer m_bandwidthLayer;
+
     // Current packets per second. Used to calculate the bandwidth
-    // TODO: Tc should be used to calculate Bc (in packets) and from it the Bandwidth.
-    // We must communicate Tc to the thread
+    // NOTE: Tc could be used to calculate Bc (in packets) and from it the bandwidth that realy will be sent.
     qreal m_pps;
 
-    // Smalest and Biggest udp Size in order to reach smallest (64) and biggest (MTU 1500) Ethernet Frame
+    // Smalest and biggest UDP size in order to reach smallest (64) and biggest (MTU 1500) Ethernet Frame
     uint m_minUdpSize;
     uint m_maxUdpSize;
 
