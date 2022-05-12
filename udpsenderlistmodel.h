@@ -68,6 +68,8 @@ private:
     int m_BandwidthUnit;
 
     bool m_isGeneratingTraffic = false;
+
+    QHostAddress m_destination;
 };
 
 #endif // UDPSENDERLISTMODEL_H

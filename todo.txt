@@ -1,12 +1,11 @@
-TODO:
-- Adding a thread - no receiving bandwidth
-
 Whishlist:
 - Remember last settings (IP-Address, layer, flows) + save settings into a file
-- Change every parameter of flows while sending
+- Allow changing every parameter of a flow while sending
 - Choose DSCP from List (EF...)
 - Add latency as a statistic
 - Make Packet-sending intervall Tc customisable per UDP-Sender
+- Package for debian
+- Choose outgoing interface
 - Stats jumps when thread restarts - pause stats for 2 seconds?
 - Pause one of the UdpEcho
 - "Ping" Saellite (udp echo port 7/UDP)

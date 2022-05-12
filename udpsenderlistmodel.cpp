@@ -216,6 +216,7 @@ bool UdpSenderListModel::insertRows(int position, int rows, const QModelIndex &/
 
     for (int row = 0; row < rows; row++) {
         sender = new UdpSender();
+        sender->setDestination(m_destination);
 
         udpSenderList.insert(position, sender);
         if (m_isGeneratingTraffic) {
@@ -304,6 +305,8 @@ void UdpSenderListModel::generateTraffic()
 
 void UdpSenderListModel::setDestinationIP(QHostAddress destinationIP)
 {
+    m_destination = destinationIP;
+
     UdpSender *sender;
     foreach (sender, udpSenderList) {
         sender->setDestination(destinationIP);
