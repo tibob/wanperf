@@ -1,5 +1,5 @@
 # This is the main repository for project wanperf
-wanperf is a multithread application which can be used to measure Network performance in a Lab environment.
+wanperf is a multithread application which can be used to measure network performance in a lab environment.
 It produces network traffic (UDP) wich is echoed by a sattellite. wanperf calculates banwidth in different network
 layers, pps, packet loss.
 
