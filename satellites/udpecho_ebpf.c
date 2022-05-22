@@ -10,8 +10,8 @@ int udpecho (struct __sk_buff * skb) {
     u32 header_length = sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct udphdr);
   
     /* Check if our frame is big enough to include an UDP datagram. If not, pass to the next filter */
-   if (data + header_length > data_end) {
-       /* perhaps the stored data is to short. Pull the data we need */
+    if (data + header_length > data_end) {
+       /* The linear data is perhaps to short. Pull the non-linear data we need */
         bpf_skb_pull_data(skb, header_length);
         data = (void *)(long)skb->data;
         data_end = (void *)(long)skb->data_end;
@@ -20,19 +20,23 @@ int udpecho (struct __sk_buff * skb) {
         if (data + header_length > data_end) {
             return TC_ACT_OK;
         }
-   }
-    
+    }
+
     /* Access the different layer headers */
     struct ethhdr *ethernet =  data;
     struct iphdr  *ip  = (data + sizeof(struct ethhdr));
     struct udphdr *udp = (data + sizeof(struct ethhdr) + sizeof(struct iphdr));   
       
-    /* Is this an IP packet? */
+    /* If this is not an IPv4 packet, return */
     if (ethernet->h_proto != __constant_htons(ETH_P_IP))
         return TC_ACT_OK;
-    
-    /* Is this an UDP datagram? */
+
+    /* If this is not an UDP datagram, return */
     if (ip->protocol != IPPROTO_UDP)
+        return TC_ACT_OK;
+
+    /* Is this isn't an unicast frame (multicast bit is set), return */
+    if ((ethernet->h_dest[0] & 0b1) == 0b1)
         return TC_ACT_OK;
 
 #ifdef PORT
