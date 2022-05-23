@@ -54,10 +54,12 @@ private:
         COL_BANDWIDTH,
         COL_DSCP,
         COL_SIZE,
+        COL_TC,
         /* Statistics */
         COL_SENDINGSTATS,
         COL_RECEIVINGSTATS,
-        COL_PACKETS,
+        COL_SENDINGPACKETS,
+        COL_RECEIVINGPACKETS,
         // COL_COUNT has to be the last enumerator, as it is the count of columns
         COL_COUNT
     };

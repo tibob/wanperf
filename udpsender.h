@@ -34,6 +34,9 @@ public:
     void setPduSize(uint pduSize, NetworkModel::Layer pduSizeLayer);
     uint specifiedPduSize(NetworkModel::Layer pduLayer);
 
+    void setTcMsec(uint tc);
+    uint tcMsec();
+
     void startTraffic();
     void stopTraffic();
 
@@ -45,12 +48,13 @@ public:
     int packetLost();
     int packetsSent();
     int packetsReceived();
+    int packetsNotSent();
 
 signals:
     void statsChanged();
 
 public slots:
-    void receiveStatistics(quint64 packetsLost, quint64 packetsSent, quint64 packetsReceived);
+    void receiveStatistics(quint64 packetsLost, quint64 packetsSent, quint64 packetsReceived, quint64 packetsNotSent);
 
 private:
     QHostAddress m_destination;
@@ -59,6 +63,7 @@ private:
 
     int m_udpPort = 7;
     quint8 m_tos = 0;
+    uint m_tcMsec = 100;
 
     // Unique identifier
     QUuid m_id;
@@ -69,6 +74,7 @@ private:
     quint64 m_PacketsLost = 0;
     quint64 m_PacketsSent = 0;
     quint64 m_PacketsReceived = 0;
+    quint64 m_PacketsNotSent = 0;
     qint64 m_lastStats;
     int m_sentPps = 0;
     int m_receivedPps = 0;

@@ -21,8 +21,8 @@ UdpSender::UdpSender(QObject *parent) :
 
     m_lastStats = QDateTime::currentMSecsSinceEpoch();
 
-    connect(&m_thread, SIGNAL(statistics(quint64,quint64,quint64)),
-            this,      SLOT(receiveStatistics(quint64,quint64,quint64)));
+    connect(&m_thread, SIGNAL(statistics(quint64,quint64,quint64,quint64)),
+            this,      SLOT(receiveStatistics(quint64,quint64,quint64,quint64)));
 }
 
 UdpSender::~UdpSender()
@@ -129,6 +129,25 @@ uint UdpSender::specifiedPduSize(NetworkModel::Layer pduLayer)
     return m_networkModel.pduSize(pduLayer);
 }
 
+void UdpSender::setTcMsec(uint tc)
+{
+    // Tc cannot be zero
+    if (tc < 1)
+        tc = 1;
+    // Tc should not be superior to 1 second (or we may have to change some code like packet loss detection)
+    if (tc > 1000)
+        tc = 1000;
+
+    m_tcMsec = tc;
+
+    m_thread.setTcMsec(m_tcMsec);
+}
+
+uint UdpSender::tcMsec()
+{
+    return  m_tcMsec;
+}
+
 void UdpSender::startTraffic()
 {
     if (m_thread.isRunning()) {
@@ -178,7 +197,13 @@ int UdpSender::packetsReceived()
     return m_PacketsReceived;
 }
 
-void UdpSender::receiveStatistics(quint64 packetsLost, quint64 packetsSent, quint64 packetsReceived)
+int UdpSender::packetsNotSent()
+{
+    return m_PacketsNotSent;
+}
+
+void UdpSender::receiveStatistics(quint64 packetsLost, quint64 packetsSent,
+                                  quint64 packetsReceived, quint64 packetsNotSent)
 {
     qint64 statTime = QDateTime::currentMSecsSinceEpoch();
 
@@ -199,5 +224,6 @@ void UdpSender::receiveStatistics(quint64 packetsLost, quint64 packetsSent, quin
     m_PacketsLost = packetsLost;
     m_PacketsSent = packetsSent;
     m_PacketsReceived = packetsReceived;
+    m_PacketsNotSent = packetsNotSent;
     m_lastStats = statTime;
 }

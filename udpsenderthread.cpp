@@ -79,6 +79,27 @@ bool UdpSenderThread::setDestination(QHostAddress address)
     return true;
 }
 
+void UdpSenderThread::setTcMsec(uint tcMsec)
+{
+    // these guards should be enforced into the UI, be we have to be sure
+    // Tc cannot be zero
+    if (tcMsec < 1)
+        tcMsec = 1;
+    // Tc should not be superior to 1 second (or we may have to change some code like packet loss detection)
+    if (tcMsec > 1000)
+        tcMsec = 1000;
+
+    m_Mutex.lock();
+    m_tcMsec = tcMsec;
+    m_Mutex.unlock();
+
+    if (isRunning()) {
+        // Restart the thread in order to re-read the variable
+        stop();
+        this->start();
+    }
+}
+
 void UdpSenderThread::stop()
 {
     if (isRunning()) {
@@ -176,7 +197,7 @@ void UdpSenderThread::run()
 
 
     // Tc (Time Commited): Time interval in which to send the packets
-    const qint64 t_msecTc = 100;
+    const qint64 t_msecTc = m_tcMsec;
     // Bc (Burst Commited): Packets to send per Time interval
     m_Mutex.lock();
     qint64 t_packetsBc = t_msecTc * m_ppmsec;
@@ -223,6 +244,7 @@ void UdpSenderThread::run()
     // Stats
     int t_statsPacketsReceived = 0;
     int t_statsPacketsLost = 0;
+    int t_statsPacketsNotSent = 0;
 
     // We consider packets that did not come back after 2 seconds as lost.
     // For this we have to keep track of the packet counters 2 seconds.
@@ -283,7 +305,7 @@ void UdpSenderThread::run()
         if (t_statNextTime < t_msecNow) {
             // The signal will be send to the main thread, this is qt magic and is thread-safe :-)
             // FIXME: Latency not sended
-            emit statistics(t_statsPacketsLost, *t_sendingCounter, t_statsPacketsReceived);
+            emit statistics(t_statsPacketsLost, *t_sendingCounter, t_statsPacketsReceived, t_statsPacketsNotSent);
 
             // Next stats in t_statsReportInterval
             t_statNextTime += t_statsReportInterval;
@@ -335,6 +357,8 @@ void UdpSenderThread::run()
         *********************************************************************/
         // Do we need to refill our Bucket?
         if (t_msecNextRefill <= t_msecNow) {
+            // If we do not sent everything keep how much for the stats
+            t_statsPacketsNotSent += t_packetBucket;
             t_msecNextRefill += t_msecTc;
             t_packetBucket = t_packetsBc;
 

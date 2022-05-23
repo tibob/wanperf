@@ -18,10 +18,11 @@ public:
     void setPpmsec(qreal ppmsec);
     bool setPort(int port);
     bool setDestination(QHostAddress address);
+    void setTcMsec(uint tcMsec);
     void stop();
 
 signals:
-    void statistics(quint64 packetsLost, quint64 packetsSent, quint64 packetsReceived);
+    void statistics(quint64 packetsLost, quint64 packetsSent, quint64 packetsReceived, quint64 packetsNotSent);
 
 protected:
     void run() Q_DECL_OVERRIDE;
@@ -41,6 +42,8 @@ private:
     QHostAddress m_destination;
     // Type of Service
     quint8 m_tos = 0;
+    // tc duration, in msec
+    uint m_tcMsec = 100;
 
     /* Locker when accessing Parameter and Statistics */
     QMutex m_Mutex;

@@ -53,6 +53,11 @@ QVariant UdpSenderListModel::data(const QModelIndex &index, int role) const
     // s is the current sender. As we have pretty long lines, s is shorter ;-)
     UdpSender *s = udpSenderList[index.row()];
     QString tmpText = "";
+    int packetsSent = 0;
+    qreal percent;
+    int packetsNotSent = 0;
+    int packetsReceived = 0;
+    int packetsLost = 0;
 
     switch (index.column()) {
         case COL_NAME:
@@ -66,6 +71,8 @@ QVariant UdpSenderListModel::data(const QModelIndex &index, int role) const
             return s->port();
         case COL_SIZE:
             return l.toString(s->specifiedPduSize(m_PDUSizeLayer));
+        case COL_TC:
+            return s->tcMsec();
         case COL_SENDINGSTATS:
             tmpText += "L1 " +
               l.toString((qreal) s->sendingBandwidth(NetworkModel::Layer1) / m_BandwidthUnit, 'f', 2) + "\n";
@@ -76,8 +83,7 @@ QVariant UdpSenderListModel::data(const QModelIndex &index, int role) const
             tmpText += "IP " +
               l.toString((qreal) s->sendingBandwidth(NetworkModel::Layer3) / m_BandwidthUnit, 'f', 2) + "\n";
             tmpText += "UDP " +
-              l.toString((qreal) s->sendingBandwidth(NetworkModel::Layer4) / m_BandwidthUnit, 'f', 2) + "\n";
-            tmpText += "pps " + l.toString(s->sendingPps());
+              l.toString((qreal) s->sendingBandwidth(NetworkModel::Layer4) / m_BandwidthUnit, 'f', 2);
             return tmpText;
         case COL_RECEIVINGSTATS:
             tmpText += "L1 " +
@@ -89,18 +95,26 @@ QVariant UdpSenderListModel::data(const QModelIndex &index, int role) const
             tmpText += "IP " +
               l.toString((qreal) s->receivingBandwidth(NetworkModel::Layer3) / m_BandwidthUnit, 'f', 2) + "\n";
             tmpText += "UDP " +
-              l.toString((qreal) s->receivingBandwidth(NetworkModel::Layer4) / m_BandwidthUnit, 'f', 2) + "\n";
-            tmpText += "pps " + l.toString(s->receivingPps());
+              l.toString((qreal) s->receivingBandwidth(NetworkModel::Layer4) / m_BandwidthUnit, 'f', 2);
             return tmpText;
-        case COL_PACKETS:
-            int packetsSent= s->packetsSent();
-            int packetsReceived= s->packetsReceived();
-            int packetsLost = s->packetLost();
-            qreal percent = (qreal) packetsLost * 100 / packetsSent;
+        case COL_SENDINGPACKETS:
+            packetsSent= s->packetsSent();
+            packetsNotSent = s->packetsNotSent();
+            percent = (qreal) packetsNotSent * 100 / (packetsSent + packetsNotSent);
             tmpText += "Packets sent: " + l.toString(packetsSent) + "\n";
+            tmpText += "Packets not sent: " + l.toString(packetsNotSent) + "\n";
+            tmpText += "Percent not sent: " + l.toString(percent) + "%\n";
+            tmpText += "pps " + l.toString(s->sendingPps());
+            return tmpText;
+        case COL_RECEIVINGPACKETS:
+            packetsSent = s->packetsSent();
+            packetsReceived = s->packetsReceived();
+            packetsLost = s->packetLost();
+            percent = (qreal) packetsLost * 100 / packetsSent;
             tmpText += "Packets received: " + l.toString(packetsReceived) + "\n";
             tmpText += "Packets lost: " + l.toString(packetsLost) + "\n";
-            tmpText += "Percent: " + l.toString(percent) + "%";
+            tmpText += "Percent lost: " + l.toString(percent) + "%\n";
+            tmpText += "pps " + l.toString(s->receivingPps());
             return tmpText;
     }
     return QVariant();
@@ -121,17 +135,21 @@ QVariant UdpSenderListModel::headerData(int section, Qt::Orientation orientation
         case COL_DSCP:
             return "DSCP Value";
         case COL_BANDWIDTH:
-            return NetworkModel::layerShortName(m_BandwidthLayer) + " specified Bandwidth";
+            return NetworkModel::layerShortName(m_BandwidthLayer) + " spec. Bandwidth";
         case COL_PORT:
             return "UDP Port";
         case COL_SIZE:
-            return NetworkModel::layerShortName(m_PDUSizeLayer) + " specified PDU Size";
+            return NetworkModel::layerShortName(m_PDUSizeLayer) + " spec. PDU Size";
+        case COL_TC:
+            return "Tc (msec)";
         case COL_SENDINGSTATS:
             return "Sending bandwidth";
         case COL_RECEIVINGSTATS:
             return "Receiving bandwidth";
-        case COL_PACKETS:
-            return "Packets";
+        case COL_SENDINGPACKETS:
+            return "Packets Sent";
+        case COL_RECEIVINGPACKETS:
+            return "Packets Received";
 
     }
     return QVariant();
@@ -178,6 +196,11 @@ bool UdpSenderListModel::setData(const QModelIndex &index, const QVariant &value
             emit dataChanged(index, index);
             return true;
             break;
+        case COL_TC:
+            udpSenderList[index.row()]->setTcMsec(value.toUInt());
+            emit dataChanged(index, index);
+            return true;
+            break;
     }
 
     return false;
@@ -191,13 +214,15 @@ Qt::ItemFlags UdpSenderListModel::flags(const QModelIndex &index) const
     // These columns are not editable
     if (index.column() == COL_SENDINGSTATS
             || index.column() == COL_RECEIVINGSTATS
-            || index.column() == COL_PACKETS) {
+            || index.column() == COL_SENDINGPACKETS
+            || index.column() == COL_RECEIVINGPACKETS
+            ) {
         return Qt::ItemIsSelectable;
     }
 
     if (m_isGeneratingTraffic) {
-        if (index.column() == COL_DSCP || index.column() == COL_PORT) {
-            // These Columns can not be edited while generating Trafic
+        if (index.column() == COL_PORT) {
+            // These Columns can not be edited while generating trafic
             return  Qt::ItemIsSelectable;
         }
     }
@@ -456,11 +481,11 @@ QString UdpSenderListModel::totalPacketsStats()
     tmpText += "Packets sent: " + l.toString(packetsSent) + "\n";
     tmpText += "Packets received: " + l.toString(packetsReceived) + "\n";
     tmpText += "Packets lost: " + l.toString(packetsLost) + "\n";
-    tmpText += "Percent: " + l.toString(percent) + "%";
+    tmpText += "Percent lost: " + l.toString(percent) + "%";
     return tmpText;
 }
 
 void UdpSenderListModel::updateStats()
 {
-    emit dataChanged(index(0, COL_SENDINGSTATS), index(rowCount()-1, COL_PACKETS));
+    emit dataChanged(index(0, COL_SENDINGSTATS), index(rowCount()-1, COL_RECEIVINGPACKETS));
 }
