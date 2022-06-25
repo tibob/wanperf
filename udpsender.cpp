@@ -16,8 +16,8 @@ UdpSender::UdpSender(QObject *parent) :
     setNetworkModel(NetworkModel());
 
     // Initialise PDU Size & Bandwidth to some Value
-    setBandwidth(1000000, NetworkModel::Layer2);
-    setPduSize(512, NetworkModel::Layer2);
+    setBandwidth(1000000, NetworkModel::EthernetLayer2);
+    setPduSize(512, NetworkModel::EthernetLayer2);
 
     m_lastStats = QDateTime::currentMSecsSinceEpoch();
 
@@ -116,7 +116,7 @@ void UdpSender::setPduSize(uint pduSize, NetworkModel::Layer pduSizeLayer)
     m_networkModel.setPduSize(pduSize, pduSizeLayer);
 
     // Whe need to remove 8 bytes of the UDP Header to get the UDP Payload (datagram SDU) length.
-    udpPayloadLength = m_networkModel.pduSize(NetworkModel::Layer4) - 8;
+    udpPayloadLength = m_networkModel.pduSize(NetworkModel::UDPLayer) - 8;
     m_thread.setDatagramSDULength(udpPayloadLength);
 
     // We need to recalculate the amount of packets per second, as the PDU Size changed but not the Bandwidth

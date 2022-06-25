@@ -16,12 +16,16 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
+    networklayer.cpp \
+    networklayerlistmodel.cpp \
     udpsender.cpp \
     networkmodel.cpp \
     udpsenderlistmodel.cpp \
     udpsenderthread.cpp
 
 HEADERS  += mainwindow.h \
+    networklayer.h \
+    networklayerlistmodel.h \
     udpsender.h \
     networkmodel.h \
     udpsenderlistmodel.h \

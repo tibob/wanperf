@@ -75,27 +75,27 @@ QVariant UdpSenderListModel::data(const QModelIndex &index, int role) const
             return s->tcMsec();
         case COL_SENDINGSTATS:
             tmpText += "L1 " +
-              l.toString((qreal) s->sendingBandwidth(NetworkModel::Layer1) / m_BandwidthUnit, 'f', 2) + "\n";
+              l.toString((qreal) s->sendingBandwidth(NetworkModel::EthernetLayer1) / m_BandwidthUnit, 'f', 2) + "\n";
             tmpText += "L2 " +
-              l.toString((qreal) s->sendingBandwidth(NetworkModel::Layer2) / m_BandwidthUnit, 'f', 2) + "\n";
+              l.toString((qreal) s->sendingBandwidth(NetworkModel::EthernetLayer2) / m_BandwidthUnit, 'f', 2) + "\n";
             tmpText += "L2noCRC " +
-              l.toString((qreal) s->sendingBandwidth(NetworkModel::Layer2noCRC) / m_BandwidthUnit, 'f', 2) + "\n";
+              l.toString((qreal) s->sendingBandwidth(NetworkModel::EthernetLayer2woCRC) / m_BandwidthUnit, 'f', 2) + "\n";
             tmpText += "IP " +
-              l.toString((qreal) s->sendingBandwidth(NetworkModel::Layer3) / m_BandwidthUnit, 'f', 2) + "\n";
+              l.toString((qreal) s->sendingBandwidth(NetworkModel::IPLayer) / m_BandwidthUnit, 'f', 2) + "\n";
             tmpText += "UDP " +
-              l.toString((qreal) s->sendingBandwidth(NetworkModel::Layer4) / m_BandwidthUnit, 'f', 2);
+              l.toString((qreal) s->sendingBandwidth(NetworkModel::UDPLayer) / m_BandwidthUnit, 'f', 2);
             return tmpText;
         case COL_RECEIVINGSTATS:
             tmpText += "L1 " +
-              l.toString((qreal) s->receivingBandwidth(NetworkModel::Layer1) / m_BandwidthUnit, 'f', 2) + "\n";
+              l.toString((qreal) s->receivingBandwidth(NetworkModel::EthernetLayer1) / m_BandwidthUnit, 'f', 2) + "\n";
             tmpText += "L2 " +
-              l.toString((qreal) s->receivingBandwidth(NetworkModel::Layer2) / m_BandwidthUnit, 'f', 2) + "\n";
+              l.toString((qreal) s->receivingBandwidth(NetworkModel::EthernetLayer2) / m_BandwidthUnit, 'f', 2) + "\n";
             tmpText += "L2noCRC " +
-              l.toString((qreal) s->receivingBandwidth(NetworkModel::Layer2noCRC) / m_BandwidthUnit, 'f', 2) + "\n";
+              l.toString((qreal) s->receivingBandwidth(NetworkModel::EthernetLayer2woCRC) / m_BandwidthUnit, 'f', 2) + "\n";
             tmpText += "IP " +
-              l.toString((qreal) s->receivingBandwidth(NetworkModel::Layer3) / m_BandwidthUnit, 'f', 2) + "\n";
+              l.toString((qreal) s->receivingBandwidth(NetworkModel::IPLayer) / m_BandwidthUnit, 'f', 2) + "\n";
             tmpText += "UDP " +
-              l.toString((qreal) s->receivingBandwidth(NetworkModel::Layer4) / m_BandwidthUnit, 'f', 2);
+              l.toString((qreal) s->receivingBandwidth(NetworkModel::UDPLayer) / m_BandwidthUnit, 'f', 2);
             return tmpText;
         case COL_SENDINGPACKETS:
             packetsSent= s->packetsSent();
@@ -359,35 +359,35 @@ QString UdpSenderListModel::totalSendingStats()
 
     bw = 0;
     foreach (s, udpSenderList) {
-        bw += s->sendingBandwidth(NetworkModel::Layer1);
+        bw += s->sendingBandwidth(NetworkModel::EthernetLayer1);
     }
     bw = bw / m_BandwidthUnit;
     tmpText += "L1 " + l.toString(bw, 'f', 2) + "\n";
 
     bw = 0;
     foreach (s, udpSenderList) {
-        bw += s->sendingBandwidth(NetworkModel::Layer2);
+        bw += s->sendingBandwidth(NetworkModel::EthernetLayer2);
     }
     bw = bw / m_BandwidthUnit;
     tmpText += "L2 " + l.toString(bw, 'f', 2) + "\n";
 
     bw = 0;
     foreach (s, udpSenderList) {
-        bw += s->sendingBandwidth(NetworkModel::Layer2noCRC);
+        bw += s->sendingBandwidth(NetworkModel::EthernetLayer2woCRC);
     }
     bw = bw / m_BandwidthUnit;
     tmpText += "L2noCRC " + l.toString(bw, 'f', 2) + "\n";
 
     bw = 0;
     foreach (s, udpSenderList) {
-        bw += s->sendingBandwidth(NetworkModel::Layer3);
+        bw += s->sendingBandwidth(NetworkModel::IPLayer);
     }
     bw = bw / m_BandwidthUnit;
     tmpText += "IP " + l.toString(bw, 'f', 2) + "\n";
 
     bw = 0;
     foreach (s, udpSenderList) {
-        bw += s->sendingBandwidth(NetworkModel::Layer4);
+        bw += s->sendingBandwidth(NetworkModel::UDPLayer);
     }
     bw = bw / m_BandwidthUnit;
     tmpText += "UDP " + l.toString(bw, 'f', 2) + "\n";
@@ -412,35 +412,35 @@ QString UdpSenderListModel::totalReceivingStats()
 
     bw = 0;
     foreach (s, udpSenderList) {
-        bw += s->receivingBandwidth(NetworkModel::Layer1);
+        bw += s->receivingBandwidth(NetworkModel::EthernetLayer1);
     }
     bw = bw / m_BandwidthUnit;
     tmpText += "L1 " + l.toString(bw, 'f', 2) + "\n";
 
     bw = 0;
     foreach (s, udpSenderList) {
-        bw += s->receivingBandwidth(NetworkModel::Layer2);
+        bw += s->receivingBandwidth(NetworkModel::EthernetLayer2);
     }
     bw = bw / m_BandwidthUnit;
     tmpText += "L2 " + l.toString(bw, 'f', 2) + "\n";
 
     bw = 0;
     foreach (s, udpSenderList) {
-        bw += s->receivingBandwidth(NetworkModel::Layer2noCRC);
+        bw += s->receivingBandwidth(NetworkModel::EthernetLayer2woCRC);
     }
     bw = bw / m_BandwidthUnit;
     tmpText += "L2noCRC " + l.toString(bw, 'f', 2) + "\n";
 
     bw = 0;
     foreach (s, udpSenderList) {
-        bw += s->receivingBandwidth(NetworkModel::Layer3);
+        bw += s->receivingBandwidth(NetworkModel::IPLayer);
     }
     bw = bw / m_BandwidthUnit;
     tmpText += "IP " + l.toString(bw, 'f', 2) + "\n";
 
     bw = 0;
     foreach (s, udpSenderList) {
-        bw += s->receivingBandwidth(NetworkModel::Layer4);
+        bw += s->receivingBandwidth(NetworkModel::UDPLayer);
     }
     bw = bw / m_BandwidthUnit;
     tmpText += "UDP " + l.toString(bw, 'f', 2) + "\n";

@@ -1,6 +1,5 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "udpsenderlistmodel.h"
 
 #include <QDateTime>
 #include <stdio.h>
@@ -23,11 +22,11 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->udpSenderView->setModel(senderListModel);
 
     // Initialise QtCombos
-    ui->bandwidthLayer->addItem("Layer 1", QVariant(NetworkModel::Layer1));
-    ui->bandwidthLayer->addItem("Layer 2", QVariant(NetworkModel::Layer2));
-    ui->bandwidthLayer->addItem("Layer 2 no CRC", QVariant(NetworkModel::Layer2noCRC));
-    ui->bandwidthLayer->addItem("Layer 3", QVariant(NetworkModel::Layer3));
-    ui->bandwidthLayer->addItem("Layer 4", QVariant(NetworkModel::Layer4));
+    ui->bandwidthLayer->addItem("Layer 1", QVariant(NetworkModel::EthernetLayer1));
+    ui->bandwidthLayer->addItem("Layer 2", QVariant(NetworkModel::EthernetLayer2));
+    ui->bandwidthLayer->addItem("Layer 2 no CRC", QVariant(NetworkModel::EthernetLayer2woCRC));
+    ui->bandwidthLayer->addItem("Layer 3", QVariant(NetworkModel::IPLayer));
+    ui->bandwidthLayer->addItem("Layer 4", QVariant(NetworkModel::UDPLayer));
     ui->bandwidthLayer->setCurrentIndex(1);
 
 
@@ -37,11 +36,11 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->bandwidthUnit->setCurrentIndex(2);
 
 
-    ui->sizeLayer->addItem("Layer 1", QVariant(NetworkModel::Layer1));
-    ui->sizeLayer->addItem("Layer 2", QVariant(NetworkModel::Layer2));
-    ui->sizeLayer->addItem("Layer 2 no CRC", QVariant(NetworkModel::Layer2noCRC));
-    ui->sizeLayer->addItem("Layer 3", QVariant(NetworkModel::Layer3));
-    ui->sizeLayer->addItem("Layer 4", QVariant(NetworkModel::Layer4));
+    ui->sizeLayer->addItem("Layer 1", QVariant(NetworkModel::EthernetLayer1));
+    ui->sizeLayer->addItem("Layer 2", QVariant(NetworkModel::EthernetLayer2));
+    ui->sizeLayer->addItem("Layer 2 no CRC", QVariant(NetworkModel::EthernetLayer2woCRC));
+    ui->sizeLayer->addItem("Layer 3", QVariant(NetworkModel::IPLayer));
+    ui->sizeLayer->addItem("Layer 4", QVariant(NetworkModel::UDPLayer));
     ui->sizeLayer->setCurrentIndex(1);
 
     //Initialise one flow
@@ -51,6 +50,27 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->udpSenderView->resizeRowsToContents();
     ui->udpSenderView->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     ui->udpSenderView->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
+
+    // Layers
+    m_wanLayersModel = new NetworkLayerListModel();
+    ui->wanLayers->setModel(m_wanLayersModel);
+    m_wanLayersModel->appendLayer(NetworkLayer::UDP);
+    m_wanLayersModel->appendLayer(NetworkLayer::IP);
+    m_wanLayersModel->appendLayer(NetworkLayer::EthernetL2);
+    m_wanLayersModel->appendLayer(NetworkLayer::EthernetL1);
+
+    m_wanSubLayersModel = new NetworkLayerListModel();
+    ui->wanSubLayers->setModel(m_wanSubLayersModel);
+    m_wanSubLayersModel->fillWithLayers(NetworkLayer::possibleSubLayers(NetworkLayer::IP));
+
+    connect(m_wanLayersModel, SIGNAL(dataChanged(QModelIndex,QModelIndex,QVector<int>)),
+            this, SLOT(wanLayersChanged()));
+
+    connect(m_wanLayersModel, SIGNAL(rowsRemoved(QModelIndex,int,int)),
+            this, SLOT(wanLayersChanged()));
+
+    connect(m_wanLayersModel, SIGNAL(rowsInserted(QModelIndex,int,int)),
+            this, SLOT(wanLayersChanged()));
 
     // Refresh global stats every second
     QTimer *statsTimer = new QTimer(this);
@@ -79,7 +99,7 @@ void MainWindow::on_btnGenerate_clicked()
     } else {
         QHostAddress destinationIP = QHostAddress(ui->destinationHost->text());
 
-        // TODO: we should check this bevor starting generating
+        // NOTE: we should check this before starting generating
         if (destinationIP.protocol() != QAbstractSocket::IPv4Protocol) {
             // we only work with IPv4
             ui->lbStatus->setText("Not an IPv4 Address");
@@ -134,4 +154,24 @@ void MainWindow::updateGlobalStats()
     ui->sendingTotal->setText(senderListModel->totalSendingStats());
     ui->receivingTotal->setText(senderListModel->totalReceivingStats());
     ui->packetsTotal->setText(senderListModel->totalPacketsStats());
+}
+
+void MainWindow::wanLayersChanged()
+{
+    m_wanSubLayersModel->fillWithLayers(NetworkLayer::possibleSubLayers(m_wanLayersModel->lastLayer()));
+}
+
+void MainWindow::on_renoveLowestLayer_clicked()
+{
+    m_wanLayersModel->removeLastLayer();
+}
+
+void MainWindow::on_addLayer_clicked()
+{
+     QModelIndex index = ui->wanSubLayers->currentIndex();
+     if (!index.isValid()) {
+         return;
+     }
+     NetworkLayer::Layer layer = m_wanSubLayersModel->layerAt(index);
+     m_wanLayersModel->appendLayer(layer);
 }

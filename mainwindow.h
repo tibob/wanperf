@@ -7,6 +7,8 @@
 
 #include "udpsender.h"
 #include "udpsenderlistmodel.h"
+#include "networklayerlistmodel.h"
+
 
 namespace Ui {
 class MainWindow;
@@ -21,15 +23,21 @@ public:
     ~MainWindow();
 
 public slots:
+
+
+
+    void updateGlobalStats();
+    void wanLayersChanged();
+
+private slots:
     void on_insertUdpSender_clicked();
     void on_removeUdpSender_clicked();
     void on_sizeLayer_currentIndexChanged(int index);
     void on_bandwidthLayer_currentIndexChanged(int index);
     void on_bandwidthUnit_currentIndexChanged(int index);
-
     void on_btnGenerate_clicked();
-
-    void updateGlobalStats();
+    void on_renoveLowestLayer_clicked();
+    void on_addLayer_clicked();
 
 private:
     Ui::MainWindow *ui;
@@ -45,6 +53,8 @@ private:
     };
 
     UdpSenderListModel *senderListModel;
+    NetworkLayerListModel *m_wanLayersModel;
+    NetworkLayerListModel *m_wanSubLayersModel;
 
     // use locale to display numbers correctly
     QLocale locale;

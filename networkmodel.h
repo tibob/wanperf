@@ -19,11 +19,16 @@ public:
     NetworkModel();
 
     enum Layer {
-        Layer1 = 1,
-        Layer2,
-        Layer2noCRC,
-        Layer3,
-        Layer4,
+        EthernetLayer1 = 1,
+        EthernetLayer2,
+        EthernetLayer2woCRC,
+        CRCforEthernetLayer2,
+        IPLayer,
+        UDPLayer,
+        GRELayer,
+        GRELayerWithKey,
+        DMVPNLayer,
+        IPSecLayer
     };
 
     enum BandwidthUnit {
@@ -32,7 +37,7 @@ public:
         mbps
     };
 
-    uint setPduSize(uint size, NetworkModel::Layer layer);
+    void setPduSize(uint size, NetworkModel::Layer layer);
     uint pduSize(NetworkModel::Layer layer);
 
     void setBandwidth(uint newBandwidth, NetworkModel::Layer layer);
@@ -46,6 +51,8 @@ public:
     static QString layerName(NetworkModel::Layer layer);
     static QString layerShortName(NetworkModel::Layer layer);
 
+    QList<Layer> subLayers(NetworkModel::Layer layer);
+    QList<Layer> WANLayers();
 
 private:
     // Peramble = 7, Start of Delimiter = 1, Interpacket gap = 12
@@ -70,12 +77,12 @@ private:
     // NOTE: Tc could be used to calculate Bc (in packets) and from it the bandwidth that realy will be sent.
     qreal m_pps;
 
-    // Smalest and biggest UDP size in order to reach smallest (64) and biggest (MTU 1500) Ethernet Frame
+    // Smalest and biggest UDP size in order to reach smallest (IP PDU-Lengeht 64) and biggest (IP MTU 1500) Ethernet Frame
     uint m_minUdpSize;
     uint m_maxUdpSize;
 
 
-    NetworkModel::Layer inputBandwidthLayer = NetworkModel::Layer2;
+    NetworkModel::Layer inputBandwidthLayer = NetworkModel::EthernetLayer2;
 };
 
 #endif // NETWORKMODEL_H

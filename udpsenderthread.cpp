@@ -124,7 +124,7 @@ void UdpSenderThread::stop()
  *
  * The stats are sent with an emited signal, which is thread-safe.
  *
- * FIXME: this is Linux-Only code.
+ * NOTE: this is Linux-Only code.
  * Hints for Sckets with Linux & Windows:
  * https://handsonnetworkprogramming.com/articles/socket-error-message-text/
  */
@@ -279,11 +279,9 @@ void UdpSenderThread::run()
 
     /********************************************************************
     * This is our thread loop. It last forever and will be broken when m_stoped ist set to true.
-    * TODO: Check if we can just kill the thread insted of setting m_stopped to true?
     *********************************************************************/
     forever {
         // Stop the thread when m_stopped is set to true from the main thread.
-        // FIXME: is bool atomic? Ca we use no mutex here?
         m_Mutex.lock();
         if (m_stopped) {
             m_stopped = false;

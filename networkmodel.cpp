@@ -31,30 +31,33 @@ NetworkModel::NetworkModel()
     // Initialize to something
     m_udpSize = 1000;
     m_bandwidth = 100;
-    m_bandwidthLayer = NetworkModel::Layer2;
+    m_bandwidthLayer = NetworkModel::EthernetLayer2;
 }
 
-uint NetworkModel::setPduSize(uint size, NetworkModel::Layer layer)
+void NetworkModel::setPduSize(uint size, NetworkModel::Layer layer)
 {
     // Assign a value to tmp_size in order to avoid a warning.
     int tmp_size = size;
 
     switch(layer) {
-    case NetworkModel::Layer1:
+    case NetworkModel::EthernetLayer1:
         tmp_size = size - m_L1overhead - m_L2overhead - m_L3overhead;
         break;
-    case NetworkModel::Layer2:
+    case NetworkModel::EthernetLayer2:
         tmp_size = size              - m_L2overhead - m_L3overhead;
         break;
-    case NetworkModel::Layer2noCRC:
+    case NetworkModel::EthernetLayer2woCRC:
         tmp_size = size         - m_L2noCRCoverhead - m_L3overhead;
         break;
-    case NetworkModel::Layer3:
+    case NetworkModel::IPLayer:
         tmp_size = size                             - m_L3overhead;
         break;
-    case NetworkModel::Layer4:
+    case NetworkModel::UDPLayer:
         tmp_size = size;
         break;
+    default:
+        /* we do not set the PDU Size for these Layers */
+        return;
     }
 
     if (tmp_size < 0) {
@@ -67,22 +70,23 @@ uint NetworkModel::setPduSize(uint size, NetworkModel::Layer layer)
 
     // recalculate pps. We use the specified bandwidth in its specified layer
     m_pps = (qreal) m_bandwidth / (pduSize(m_bandwidthLayer) * 8);
-
-    return pduSize(layer);
 }
 
 uint NetworkModel::pduSize(NetworkModel::Layer layer)
 {
     switch (layer) {
-    case NetworkModel::Layer1:
+    case NetworkModel::EthernetLayer1:
         return m_udpSize + m_L3overhead + m_L2overhead + m_L1overhead;
-    case NetworkModel::Layer2:
+    case NetworkModel::EthernetLayer2:
         return m_udpSize + m_L3overhead + m_L2overhead;
-    case NetworkModel::Layer2noCRC:
+    case NetworkModel::EthernetLayer2woCRC:
         return m_udpSize + m_L3overhead + m_L2noCRCoverhead;
-    case NetworkModel::Layer3:
+    case NetworkModel::IPLayer:
         return m_udpSize + m_L3overhead;
-    case NetworkModel::Layer4:
+    case NetworkModel::UDPLayer:
+        return m_udpSize;
+    default:
+        // we do calculate the PDU Size for other Layers
         return m_udpSize;
     }
 
@@ -124,16 +128,18 @@ qreal NetworkModel::pps()
 QString NetworkModel::layerName(NetworkModel::Layer layer)
 {
     switch(layer) {
-    case NetworkModel::Layer1:
+    case NetworkModel::EthernetLayer1:
         return "Ethernet Physical Layer (L1)";
-    case NetworkModel::Layer2:
+    case NetworkModel::EthernetLayer2:
         return "Ethernet Data Link Layer (L2)";
-    case NetworkModel::Layer2noCRC:
+    case NetworkModel::EthernetLayer2woCRC:
         return "Ethernet Data Link Layer without CRC Filed (L2)";
-    case NetworkModel::Layer3:
+    case NetworkModel::IPLayer:
         return "IP Network Layer (L3)";
-    case NetworkModel::Layer4:
+    case NetworkModel::UDPLayer:
         return "UDP Transport Layer (L4)";
+    default:
+        return "FIXME";
     }
 
     // This should never be reached
@@ -143,21 +149,76 @@ QString NetworkModel::layerName(NetworkModel::Layer layer)
 
 QString NetworkModel::layerShortName(NetworkModel::Layer layer)
 {
+    QString shortname;
     switch(layer) {
-    case NetworkModel::Layer1:
-        return "L1";
-    case NetworkModel::Layer2:
-        return "L2";
-    case NetworkModel::Layer2noCRC:
-        return "L2noCRC";
-    case NetworkModel::Layer3:
-        return "L3";
-    case NetworkModel::Layer4:
-        return "L4";
+    case EthernetLayer1:
+        shortname = "EthernetL1";
+        break;
+    case EthernetLayer2:
+        shortname = "EthernetL2";
+        break;
+    case EthernetLayer2woCRC:
+        shortname = "L2noCRC";
+        break;
+    case IPLayer:
+        shortname = "IP";
+        break;
+    case UDPLayer:
+        shortname = "UDP";
+        break;
+    case GRELayer:
+        shortname = "GRE";
+        break;
+    case GRELayerWithKey:
+        shortname = "GREwKey";
+        break;
+    case IPSecLayer:
+        shortname = "IPSec";
+        break;
+    case DMVPNLayer:
+        shortname = "DMVPN";
+        break;
+    case CRCforEthernetLayer2:
+        shortname = "EthernetL2wCRC";
+        break;
     }
 
-    // This should never be reached
-    return "";
+    return shortname;
+}
+
+QList<NetworkModel::Layer> NetworkModel::subLayers(NetworkModel::Layer layer)
+{
+    QList<NetworkModel::Layer> list;
+    switch (layer) {
+    case UDPLayer:
+        list.append(IPLayer);
+        break;
+    case IPLayer:
+        list.append(EthernetLayer2);
+        list.append(EthernetLayer2woCRC);
+        list.append(GRELayer);
+        list.append(GRELayerWithKey);
+        list.append(DMVPNLayer);
+        list.append(IPSecLayer);
+        break;
+    case EthernetLayer2woCRC:
+        list.append(CRCforEthernetLayer2);
+        break;
+    case EthernetLayer2:
+    case CRCforEthernetLayer2:
+        list.append(EthernetLayer1);
+        break;
+    case EthernetLayer1:
+        /* no sublayer */
+        break;
+    case GRELayer:
+    case GRELayerWithKey:
+    case DMVPNLayer:
+    case IPSecLayer:
+        list.append(IPLayer);
+        break;
+    }
+    return list;
 }
 
 
