@@ -21,6 +21,11 @@ public:
     NetworkLayer::Layer lastLayer();
     NetworkLayer::Layer layerAt(const QModelIndex &index);
     void fillWithLayers(QList<NetworkLayer::Layer> layerList);
+    QList<NetworkLayer::Layer> layerList();
+    QList<uint> layerPDUSize();
+
+    NetworkLayerListModel *clone();
+    void setUDPPDUSize(uint size);
 
 private:
     QList<NetworkLayer *> m_networklayerList;

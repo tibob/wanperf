@@ -29,6 +29,9 @@ UdpSender::~UdpSender()
 {
     // be sure to stop the thread or get a segfault.
     m_thread.stop();
+    if (m_WANNetworkModel) {
+        delete m_WANNetworkModel;
+    }
 }
 
 void UdpSender::setNetworkModel(NetworkModel model)
@@ -39,6 +42,18 @@ void UdpSender::setNetworkModel(NetworkModel model)
 NetworkModel UdpSender::networkModel()
 {
     return m_networkModel;
+}
+
+void UdpSender::setWANLayerModel(NetworkLayerListModel *model)
+{
+    // Do nothing if there is no model
+    if (model == NULL)
+        return;
+
+    if (m_WANNetworkModel) {
+        delete m_WANNetworkModel;
+    }
+    m_WANNetworkModel = model->clone();
 }
 
 void UdpSender::setDestination(QHostAddress address)
@@ -94,13 +109,11 @@ QUuid UdpSender::id()
 
 void UdpSender::setBandwidth(uint bandwidth, NetworkModel::Layer bandwidthLayer)
 {
-    qreal ppmsec;
-
     m_networkModel.setBandwidth(bandwidth, bandwidthLayer);
 
     // We need to recalculate the amount of packets per second, as the Bandwidth changed
-    ppmsec = m_networkModel.pps() / 1000;
-    m_thread.setPpmsec(ppmsec);
+    m_specPps = m_networkModel.pps();
+    m_thread.setPpmsec(m_specPps / 1000);
 }
 
 uint UdpSender::specifiedBandwidth(NetworkModel::Layer bandwidthLayer)
@@ -111,17 +124,20 @@ uint UdpSender::specifiedBandwidth(NetworkModel::Layer bandwidthLayer)
 void UdpSender::setPduSize(uint pduSize, NetworkModel::Layer pduSizeLayer)
 {
     uint udpPayloadLength;
-    qreal ppmsec;
 
     m_networkModel.setPduSize(pduSize, pduSizeLayer);
 
+
+    m_specUDPPDUSize = m_networkModel.pduSize(NetworkModel::UDPLayer);
+    m_WANNetworkModel->setUDPPDUSize(m_specUDPPDUSize);
+
     // Whe need to remove 8 bytes of the UDP Header to get the UDP Payload (datagram SDU) length.
-    udpPayloadLength = m_networkModel.pduSize(NetworkModel::UDPLayer) - 8;
+    udpPayloadLength = m_specUDPPDUSize - 8;
     m_thread.setDatagramSDULength(udpPayloadLength);
 
     // We need to recalculate the amount of packets per second, as the PDU Size changed but not the Bandwidth
-    ppmsec = m_networkModel.pps() / 1000;
-    m_thread.setPpmsec(ppmsec);
+    m_specPps = m_networkModel.pps();
+    m_thread.setPpmsec(m_specPps / 1000);
 }
 
 uint UdpSender::specifiedPduSize(NetworkModel::Layer pduLayer)
@@ -200,6 +216,34 @@ int UdpSender::packetsReceived()
 int UdpSender::packetsNotSent()
 {
     return m_PacketsNotSent;
+}
+
+QList<int> UdpSender::WANsendingBandwidth()
+{
+    uint size;
+    QList<int> l;
+    QList<uint> pduList;
+    pduList = m_WANNetworkModel->layerPDUSize();
+
+    foreach (size, pduList) {
+        l.append(size * m_sentPps);
+    }
+
+    return l;
+}
+
+QList<int> UdpSender::WANreceivingBandwidth()
+{
+    uint size;
+    QList<int> l;
+    QList<uint> pduList;
+    pduList = m_WANNetworkModel->layerPDUSize();
+
+    foreach (size, pduList) {
+        l.append(size * m_receivedPps);
+    }
+
+    return l;
 }
 
 void UdpSender::receiveStatistics(quint64 packetsLost, quint64 packetsSent,

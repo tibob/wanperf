@@ -104,3 +104,43 @@ void NetworkLayerListModel::fillWithLayers(QList<NetworkLayer::Layer> layerList)
     }
 }
 
+QList<NetworkLayer::Layer> NetworkLayerListModel::layerList()
+{
+    NetworkLayer *networkLayer;
+    QList<NetworkLayer::Layer> layerList;
+
+    foreach (networkLayer, m_networklayerList) {
+        layerList.append(networkLayer->layer());
+    }
+
+    return layerList;
+}
+
+QList<uint> NetworkLayerListModel::layerPDUSize()
+{
+    NetworkLayer *networkLayer;
+    QList<uint> list;
+
+    foreach (networkLayer, m_networklayerList) {
+        list.append(networkLayer->PDUSize());
+    }
+
+    return list;
+}
+
+// Duplicates the current model. As we have complex Structure (and QOBJECT), we can't just copy it
+// The caller must ensure the memory is cleared.
+NetworkLayerListModel *NetworkLayerListModel::clone()
+{
+    NetworkLayerListModel *model = new NetworkLayerListModel();
+
+    model->fillWithLayers(this->layerList());
+
+    return model;
+}
+
+void NetworkLayerListModel::setUDPPDUSize(uint size)
+{
+    m_networklayerList[0]->setPDUSize(size);
+}
+

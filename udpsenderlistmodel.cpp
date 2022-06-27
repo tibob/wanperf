@@ -16,7 +16,7 @@ int UdpSenderListModel::rowCount(const QModelIndex &parent) const
     if (parent.isValid())
         return 0;
 
-    return udpSenderList.count();
+    return m_udpSenderList.count();
 }
 
 int UdpSenderListModel::columnCount(const QModelIndex &parent) const
@@ -32,7 +32,7 @@ QVariant UdpSenderListModel::data(const QModelIndex &index, int role) const
     if (!index.isValid())
         return QVariant();
 
-    if (index.row() > udpSenderList.count())
+    if (index.row() > m_udpSenderList.count())
         return QVariant();
 
     if (role == Qt::TextAlignmentRole) {
@@ -51,7 +51,7 @@ QVariant UdpSenderListModel::data(const QModelIndex &index, int role) const
     // l is the current locale. As we have pretty long lines, l is shorter ;-)
     QLocale l = QLocale();
     // s is the current sender. As we have pretty long lines, s is shorter ;-)
-    UdpSender *s = udpSenderList[index.row()];
+    UdpSender *s = m_udpSenderList[index.row()];
     QString tmpText = "";
     int packetsSent = 0;
     qreal percent;
@@ -160,7 +160,7 @@ bool UdpSenderListModel::setData(const QModelIndex &index, const QVariant &value
     if (!index.isValid())
         return false;
 
-    if (index.row() > udpSenderList.count())
+    if (index.row() > m_udpSenderList.count())
         return false;
 
     if (role != Qt::EditRole) {
@@ -172,32 +172,32 @@ bool UdpSenderListModel::setData(const QModelIndex &index, const QVariant &value
 
     switch (index.column()) {
         case COL_NAME:
-            udpSenderList[index.row()]->setName(value.toString());
+            m_udpSenderList[index.row()]->setName(value.toString());
             emit dataChanged(index, index);
             return true;
             break;
         case COL_DSCP:
-            udpSenderList[index.row()]->setDscp(value.toUInt());
+            m_udpSenderList[index.row()]->setDscp(value.toUInt());
             emit dataChanged(index, index);
             return true;
             break;
         case COL_BANDWIDTH:
-            udpSenderList[index.row()]->setBandwidth(locale.toDouble(stringValue) * m_BandwidthUnit, m_BandwidthLayer);
+            m_udpSenderList[index.row()]->setBandwidth(locale.toDouble(stringValue) * m_BandwidthUnit, m_BandwidthLayer);
             emit dataChanged(index, index);
             return true;
             break;
         case COL_PORT:
-            udpSenderList[index.row()]->setPort(value.toUInt());
+            m_udpSenderList[index.row()]->setPort(value.toUInt());
             emit dataChanged(index, index);
             return true;
             break;
         case COL_SIZE:
-            udpSenderList[index.row()]->setPduSize(locale.toUInt(stringValue), m_PDUSizeLayer);
+            m_udpSenderList[index.row()]->setPduSize(locale.toUInt(stringValue), m_PDUSizeLayer);
             emit dataChanged(index, index);
             return true;
             break;
         case COL_TC:
-            udpSenderList[index.row()]->setTcMsec(value.toUInt());
+            m_udpSenderList[index.row()]->setTcMsec(value.toUInt());
             emit dataChanged(index, index);
             return true;
             break;
@@ -234,7 +234,7 @@ bool UdpSenderListModel::insertRows(int position, int rows, const QModelIndex &/
 {
     UdpSender *sender;
 
-    if (position < 0 || position > udpSenderList.count())
+    if (position < 0 || position > m_udpSenderList.count())
         return false;
 
     beginInsertRows(QModelIndex(), position, position+rows-1);
@@ -243,7 +243,7 @@ bool UdpSenderListModel::insertRows(int position, int rows, const QModelIndex &/
         sender = new UdpSender();
         sender->setDestination(m_destination);
 
-        udpSenderList.insert(position, sender);
+        m_udpSenderList.insert(position, sender);
         if (m_isGeneratingTraffic) {
             sender->startTraffic();
         }
@@ -257,18 +257,28 @@ bool UdpSenderListModel::removeRows(int position, int rows, const QModelIndex &/
 {
     UdpSender *sender;
 
-    if (position < 0 || position > udpSenderList.count())
+    if (position < 0 || position > m_udpSenderList.count())
         return false;
 
     beginRemoveRows(QModelIndex(), position, position+rows-1);
 
     for (int row = 0; row < rows; ++row) {
-        sender = udpSenderList.takeAt(position);
+        sender = m_udpSenderList.takeAt(position);
         delete sender;
     }
 
     endRemoveRows();
     return true;
+}
+
+void UdpSenderListModel::setWANLayerModel(NetworkLayerListModel *WANmodel)
+{
+    m_WANLayerModel = WANmodel;
+
+    UdpSender *sender;
+    foreach (sender, m_udpSenderList) {
+        sender->setWANLayerModel(WANmodel);
+    }
 }
 
 void UdpSenderListModel::setPDUSizeLayer(NetworkModel::Layer layer)
@@ -287,7 +297,7 @@ void UdpSenderListModel::setBandwidthLayer(NetworkModel::Layer layer)
        each time we change the PDU Size, the Bandwidth will be modified.
        */
     UdpSender *sender;
-    foreach (sender, udpSenderList) {
+    foreach (sender, m_udpSenderList) {
         sender->setBandwidth(sender->specifiedBandwidth(m_BandwidthLayer), m_BandwidthLayer);
     }
 
@@ -308,7 +318,7 @@ void UdpSenderListModel::setBandwidthUnit(int bandwidthUnit)
 void UdpSenderListModel::stopAllSender()
 {
     UdpSender *sender;
-    foreach (sender, udpSenderList) {
+    foreach (sender, m_udpSenderList) {
         sender->stopTraffic();
     }
     m_isGeneratingTraffic = false;
@@ -322,7 +332,7 @@ void UdpSenderListModel::generateTraffic()
     emit dataChanged(index(0, 0), index(rowCount()-1, columnCount()-1));
 
     /* Starts to generate Traffic */
-    foreach (sender, udpSenderList) {
+    foreach (sender, m_udpSenderList) {
         sender->startTraffic();
     }
     m_isGeneratingTraffic = true;
@@ -333,7 +343,7 @@ void UdpSenderListModel::setDestinationIP(QHostAddress destinationIP)
     m_destination = destinationIP;
 
     UdpSender *sender;
-    foreach (sender, udpSenderList) {
+    foreach (sender, m_udpSenderList) {
         sender->setDestination(destinationIP);
     }
 }
@@ -342,7 +352,7 @@ qreal UdpSenderListModel::totalSpecifiedBandwidth(NetworkModel::Layer layer)
 {
     qreal totalBandwidth = 0;
     UdpSender *sender;
-    foreach (sender, udpSenderList) {
+    foreach (sender, m_udpSenderList) {
         totalBandwidth += sender->specifiedBandwidth(layer);
     }
 
@@ -358,42 +368,42 @@ QString UdpSenderListModel::totalSendingStats()
     int pps;
 
     bw = 0;
-    foreach (s, udpSenderList) {
+    foreach (s, m_udpSenderList) {
         bw += s->sendingBandwidth(NetworkModel::EthernetLayer1);
     }
     bw = bw / m_BandwidthUnit;
     tmpText += "L1 " + l.toString(bw, 'f', 2) + "\n";
 
     bw = 0;
-    foreach (s, udpSenderList) {
+    foreach (s, m_udpSenderList) {
         bw += s->sendingBandwidth(NetworkModel::EthernetLayer2);
     }
     bw = bw / m_BandwidthUnit;
     tmpText += "L2 " + l.toString(bw, 'f', 2) + "\n";
 
     bw = 0;
-    foreach (s, udpSenderList) {
+    foreach (s, m_udpSenderList) {
         bw += s->sendingBandwidth(NetworkModel::EthernetLayer2woCRC);
     }
     bw = bw / m_BandwidthUnit;
     tmpText += "L2noCRC " + l.toString(bw, 'f', 2) + "\n";
 
     bw = 0;
-    foreach (s, udpSenderList) {
+    foreach (s, m_udpSenderList) {
         bw += s->sendingBandwidth(NetworkModel::IPLayer);
     }
     bw = bw / m_BandwidthUnit;
     tmpText += "IP " + l.toString(bw, 'f', 2) + "\n";
 
     bw = 0;
-    foreach (s, udpSenderList) {
+    foreach (s, m_udpSenderList) {
         bw += s->sendingBandwidth(NetworkModel::UDPLayer);
     }
     bw = bw / m_BandwidthUnit;
     tmpText += "UDP " + l.toString(bw, 'f', 2) + "\n";
 
     pps = 0;
-    foreach (s, udpSenderList) {
+    foreach (s, m_udpSenderList) {
         pps += s->sendingPps();
     }
     tmpText += "pps " + l.toString(pps);
@@ -411,42 +421,42 @@ QString UdpSenderListModel::totalReceivingStats()
     int pps;
 
     bw = 0;
-    foreach (s, udpSenderList) {
+    foreach (s, m_udpSenderList) {
         bw += s->receivingBandwidth(NetworkModel::EthernetLayer1);
     }
     bw = bw / m_BandwidthUnit;
     tmpText += "L1 " + l.toString(bw, 'f', 2) + "\n";
 
     bw = 0;
-    foreach (s, udpSenderList) {
+    foreach (s, m_udpSenderList) {
         bw += s->receivingBandwidth(NetworkModel::EthernetLayer2);
     }
     bw = bw / m_BandwidthUnit;
     tmpText += "L2 " + l.toString(bw, 'f', 2) + "\n";
 
     bw = 0;
-    foreach (s, udpSenderList) {
+    foreach (s, m_udpSenderList) {
         bw += s->receivingBandwidth(NetworkModel::EthernetLayer2woCRC);
     }
     bw = bw / m_BandwidthUnit;
     tmpText += "L2noCRC " + l.toString(bw, 'f', 2) + "\n";
 
     bw = 0;
-    foreach (s, udpSenderList) {
+    foreach (s, m_udpSenderList) {
         bw += s->receivingBandwidth(NetworkModel::IPLayer);
     }
     bw = bw / m_BandwidthUnit;
     tmpText += "IP " + l.toString(bw, 'f', 2) + "\n";
 
     bw = 0;
-    foreach (s, udpSenderList) {
+    foreach (s, m_udpSenderList) {
         bw += s->receivingBandwidth(NetworkModel::UDPLayer);
     }
     bw = bw / m_BandwidthUnit;
     tmpText += "UDP " + l.toString(bw, 'f', 2) + "\n";
 
     pps = 0;
-    foreach (s, udpSenderList) {
+    foreach (s, m_udpSenderList) {
         pps += s->receivingPps();
     }
     tmpText += "pps " + l.toString(pps);
@@ -462,17 +472,17 @@ QString UdpSenderListModel::totalPacketsStats()
     QLocale l;
 
     int packetsSent = 0;
-    foreach (s, udpSenderList) {
+    foreach (s, m_udpSenderList) {
         packetsSent += s->packetsSent();
     }
 
     int packetsReceived = 0;
-    foreach (s, udpSenderList) {
+    foreach (s, m_udpSenderList) {
         packetsReceived += s->packetsReceived();
     }
 
     int packetsLost = 0;
-    foreach (s, udpSenderList) {
+    foreach (s, m_udpSenderList) {
         packetsLost += s->packetLost();
     }
 

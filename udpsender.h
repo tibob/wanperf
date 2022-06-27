@@ -1,4 +1,4 @@
-#ifndef UDPSENDER_H
+﻿#ifndef UDPSENDER_H
 #define UDPSENDER_H
 
 #include <QObject>
@@ -8,6 +8,7 @@
 
 #include "networkmodel.h"
 #include "udpsenderthread.h"
+#include "networklayerlistmodel.h"
 
 class UdpSender : public QObject
 {
@@ -18,6 +19,9 @@ public:
 //    Packet Length
     void setNetworkModel(NetworkModel model);
     NetworkModel networkModel();
+
+   void setWANLayerModel(NetworkLayerListModel *model);
+
 //    Destination Host - should this be part of the constructor?
     void setDestination(QHostAddress address);
     void setPort(int udpPort);
@@ -50,6 +54,9 @@ public:
     int packetsReceived();
     int packetsNotSent();
 
+    QList<int> WANsendingBandwidth();
+    QList<int> WANreceivingBandwidth();
+
 signals:
     void statsChanged();
 
@@ -69,6 +76,11 @@ private:
     QUuid m_id;
 
     NetworkModel m_networkModel;
+    NetworkLayerListModel *m_WANNetworkModel = NULL;
+    /* Specified UDP PDU size */
+    uint m_specUDPPDUSize;
+    /* Specified packets per second */
+    qreal m_specPps;
 
     /***** Statistics *****/
     quint64 m_PacketsLost = 0;

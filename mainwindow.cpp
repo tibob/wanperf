@@ -44,7 +44,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->sizeLayer->setCurrentIndex(1);
 
     //Initialise one flow
-    senderListModel->insertRow(0);
+    on_insertUdpSender_clicked();
 
     ui->udpSenderView->resizeColumnsToContents();
     ui->udpSenderView->resizeRowsToContents();

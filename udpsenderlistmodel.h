@@ -6,6 +6,7 @@
 
 #include "udpsender.h"
 #include "networkmodel.h"
+#include "networklayerlistmodel.h"
 
 class UdpSenderListModel : public QAbstractTableModel
 {
@@ -25,6 +26,9 @@ public:
 
     bool insertRows(int position, int rows, const QModelIndex &index = QModelIndex()) override;
     bool removeRows(int position, int rows, const QModelIndex &index = QModelIndex()) override;
+
+    // Layer related functions
+    void setWANLayerModel(NetworkLayerListModel *WANmodel);
 
     void setPDUSizeLayer(NetworkModel::Layer layer);
     void setBandwidthLayer(NetworkModel::Layer layer);
@@ -46,7 +50,7 @@ public slots:
     void updateStats();
 
 private:
-    QList<UdpSender *> udpSenderList;
+    QList<UdpSender *> m_udpSenderList;
 
     enum udpSenderColumns {
         COL_NAME, // 0
@@ -68,6 +72,8 @@ private:
     NetworkModel::Layer m_PDUSizeLayer;
     NetworkModel::Layer m_BandwidthLayer;
     int m_BandwidthUnit;
+
+    NetworkLayerListModel *m_WANLayerModel;
 
     bool m_isGeneratingTraffic = false;
 
