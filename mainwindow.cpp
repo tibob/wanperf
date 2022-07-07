@@ -59,6 +59,8 @@ MainWindow::MainWindow(QWidget *parent) :
     m_wanLayersModel->appendLayer(NetworkLayer::EthernetL2);
     m_wanLayersModel->appendLayer(NetworkLayer::EthernetL1);
 
+    senderListModel->setWANLayerModel(m_wanLayersModel);
+
     m_wanSubLayersModel = new NetworkLayerListModel();
     ui->wanSubLayers->setModel(m_wanSubLayersModel);
     m_wanSubLayersModel->fillWithLayers(NetworkLayer::possibleSubLayers(NetworkLayer::IP));

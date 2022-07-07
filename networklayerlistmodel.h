@@ -23,9 +23,12 @@ public:
     void fillWithLayers(QList<NetworkLayer::Layer> layerList);
     QList<NetworkLayer::Layer> layerList();
     QList<uint> layerPDUSize();
+    QList<QString> layerShortNameList();
 
     NetworkLayerListModel *clone();
     void setUDPPDUSize(uint size);
+    void setPDUSize(const uint row, const uint size);
+
 
 private:
     QList<NetworkLayer *> m_networklayerList;
@@ -33,8 +36,6 @@ private:
     enum networkLayerColumns {
         COL_NAME, // 0
         COL_DISPLAY,
-        COL_RECV_STATS,
-        COL_SEND_STATS,
         // COL_COUNT has to be the last enumerator, as it is the count of columns
         COL_COUNT
     };

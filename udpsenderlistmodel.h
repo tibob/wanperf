@@ -39,11 +39,17 @@ public:
 
     void setDestinationIP(QHostAddress destinationIP);
 
-    // Statistics
+    // Total Statistics are displayed in MainWindow and can not be private
     qreal totalSpecifiedBandwidth(NetworkModel::Layer layer);
     QString totalSendingStats();
     QString totalReceivingStats();
     QString totalPacketsStats();
+    QString WANtotalReceivingStats();
+    QString WANtotalPacketsStats();
+
+private:
+    QString WANSendingStats(const QModelIndex &index) const;
+    QString WANReceivingStats(const QModelIndex &index) const;
 
 
 public slots:
@@ -64,6 +70,8 @@ private:
         COL_RECEIVINGSTATS,
         COL_SENDINGPACKETS,
         COL_RECEIVINGPACKETS,
+        COL_WANSENDINGSTATS,
+        COL_WANRECEIVINGSTATS,
         // COL_COUNT has to be the last enumerator, as it is the count of columns
         COL_COUNT
     };
@@ -73,7 +81,7 @@ private:
     NetworkModel::Layer m_BandwidthLayer;
     int m_BandwidthUnit;
 
-    NetworkLayerListModel *m_WANLayerModel;
+    NetworkLayerListModel *m_WANLayerModel = NULL;
 
     bool m_isGeneratingTraffic = false;
 

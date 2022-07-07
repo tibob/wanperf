@@ -26,12 +26,14 @@ public:
     static QList<NetworkLayer::Layer> possibleSubLayers(NetworkLayer::Layer layer);
     void setLowerLayer(NetworkLayer *networkLayer);
     void setHigherLayer(NetworkLayer *networkLayer);
-    void removeLoweLayer();
+    void removeLowerLayer();
     void removeHigherLayer();
     NetworkLayer::Layer layer();
 
     uint setPDUSize(uint size);
+    uint setSDUSize(uint SDUSize);
     uint PDUSize();
+    uint SDUSize();
 
     QString layerName();
     QString layerShortName();
@@ -106,6 +108,7 @@ private:
 
 
     uint m_PDUSize;
+    uint m_SDUSize;
 
 };
 

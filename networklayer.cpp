@@ -15,7 +15,7 @@ NetworkLayer::~NetworkLayer()
     // this should never occur as we cannot remove a layer which is currently encapsulated
     Q_ASSERT(m_higherLayer == NULL);
     if (m_higherLayer)
-        m_higherLayer->removeLoweLayer();
+        m_higherLayer->removeLowerLayer();
 }
 
 QList<NetworkLayer::Layer> NetworkLayer::possibleSubLayers(NetworkLayer::Layer layer)
@@ -75,7 +75,7 @@ void NetworkLayer::setHigherLayer(NetworkLayer *networkLayer)
     networkLayer->setLowerLayer(this);
 }
 
-void NetworkLayer::removeLoweLayer()
+void NetworkLayer::removeLowerLayer()
 {
     m_lowerLayer = NULL;
 }
@@ -92,50 +92,66 @@ NetworkLayer::Layer NetworkLayer::layer()
 
 uint NetworkLayer::setPDUSize(uint size)
 {
-    uint layerPDUSize;
-    uint layerSDUSize;
-    uint higherLayerPDUSize;
-
-    layerPDUSize = size;
+    m_PDUSize = size;
 
     // Minimal PDU from Protocol
-    layerPDUSize = qMax(layerPDUSize, m_minPDUsize[m_layer]);
+    m_PDUSize = qMax(m_PDUSize, m_minPDUsize[m_layer]);
 
     // Maximal PDU to avoid fragmentation
-    layerPDUSize = qMin(layerPDUSize, m_maxPDUsize[m_layer]);
+    m_PDUSize = qMin(m_PDUSize, m_maxPDUsize[m_layer]);
 
-
-    if (m_higherLayer) {
-        // If we have an higer layer (that we encapsulate), our SDU is its PDU, so we calculate it
-        switch (m_layer) {
-        case NetworkLayer::IPSec:
-            // FIXME: calculate padding accurately
-            layerSDUSize = layerPDUSize - m_overhead[m_layer];
-            break;
-        default:
-            layerSDUSize = layerPDUSize - m_overhead[m_layer];
-            break;
-        }
-
-        // Wen we set the PDU of the higher Layer, it may adjust it, so we need to recalculate our PDU Size
-        higherLayerPDUSize = m_higherLayer->setPDUSize(layerSDUSize);
-        switch (m_layer) {
-        case NetworkLayer::IPSec:
-            // FIXME: calculate padding accurately
-            layerPDUSize =  higherLayerPDUSize + m_overhead[m_layer];
-            break;
-        default:
-            layerPDUSize =  higherLayerPDUSize + m_overhead[m_layer];
-            break;
-        }
+    switch (m_layer) {
+    case NetworkLayer::IPSec:
+        // FIXME: calculate padding accurately
+        m_SDUSize = m_PDUSize - m_overhead[m_layer];
+        break;
+    default:
+        m_SDUSize = m_PDUSize - m_overhead[m_layer];
+        break;
     }
 
-    return layerPDUSize;
+    return m_PDUSize;
+}
+
+uint NetworkLayer::setSDUSize(uint SDUSize)
+{
+    switch (m_layer) {
+    case NetworkLayer::IPSec:
+        // FIXME: calculate padding accurately
+        m_PDUSize = SDUSize + m_overhead[m_layer];
+        break;
+    default:
+        m_PDUSize = SDUSize + m_overhead[m_layer];
+        break;
+    }
+
+    // Minimal PDU from Protocol
+    m_PDUSize = qMax(m_PDUSize, m_minPDUsize[m_layer]);
+
+    // Maximal PDU to avoid fragmentation
+    m_PDUSize = qMin(m_PDUSize, m_maxPDUsize[m_layer]);
+
+    switch (m_layer) {
+    case NetworkLayer::IPSec:
+        // FIXME: calculate padding accurately
+        m_SDUSize = m_PDUSize - m_overhead[m_layer];
+        break;
+    default:
+        m_SDUSize = m_PDUSize - m_overhead[m_layer];
+        break;
+    }
+
+    return m_SDUSize;
 }
 
 uint NetworkLayer::PDUSize()
 {
     return m_PDUSize;
+}
+
+uint NetworkLayer::SDUSize()
+{
+    return m_SDUSize;
 }
 
 QString NetworkLayer::layerName()

@@ -1,8 +1,9 @@
+#include <QDebug>
+
 #include "networklayerlistmodel.h"
 
 NetworkLayerListModel::NetworkLayerListModel()
 {
-
 }
 
 int NetworkLayerListModel::rowCount(const QModelIndex &parent) const
@@ -109,6 +110,10 @@ QList<NetworkLayer::Layer> NetworkLayerListModel::layerList()
     NetworkLayer *networkLayer;
     QList<NetworkLayer::Layer> layerList;
 
+    if (m_networklayerList.isEmpty()) {
+        return layerList;
+    }
+
     foreach (networkLayer, m_networklayerList) {
         layerList.append(networkLayer->layer());
     }
@@ -121,8 +126,28 @@ QList<uint> NetworkLayerListModel::layerPDUSize()
     NetworkLayer *networkLayer;
     QList<uint> list;
 
+    if (m_networklayerList.isEmpty()) {
+        return list;
+    }
+
     foreach (networkLayer, m_networklayerList) {
         list.append(networkLayer->PDUSize());
+    }
+
+    return list;
+}
+
+QList<QString> NetworkLayerListModel::layerShortNameList()
+{
+    NetworkLayer *networkLayer = NULL;
+    QList<QString> list;
+
+    if (m_networklayerList.isEmpty()) {
+        return list;
+    }
+
+    foreach (networkLayer, m_networklayerList) {
+        list.append(networkLayer->layerShortName());
     }
 
     return list;
@@ -141,6 +166,37 @@ NetworkLayerListModel *NetworkLayerListModel::clone()
 
 void NetworkLayerListModel::setUDPPDUSize(uint size)
 {
-    m_networklayerList[0]->setPDUSize(size);
+    setPDUSize(0, size);
+}
+
+void NetworkLayerListModel::setPDUSize(const uint row, const uint size)
+{
+    const int maxrows = m_networklayerList.count() - 1;
+    if (static_cast<int>(row) > maxrows) {
+        return;
+    }
+
+    int i;
+    uint SDUSizePreviousLayer = size;
+
+    // Go all layers up to the highest layer
+    for (i = row; i >= 0; i--) {
+        m_networklayerList[i]->setPDUSize(SDUSizePreviousLayer);
+        SDUSizePreviousLayer = m_networklayerList[i]->SDUSize();
+    }
+
+    // Now go all layers down to the lowest layer
+    uint PDUSizePreviousLayer = m_networklayerList[0]->PDUSize();
+    for (i = 1; i <= maxrows; i++) {
+        m_networklayerList[i]->setSDUSize(PDUSizePreviousLayer);
+        PDUSizePreviousLayer = m_networklayerList[i]->PDUSize();
+    }
+
+    // Finaly, as we may have a change in PDUs, wie go all layers up again
+    SDUSizePreviousLayer = m_networklayerList[maxrows]->SDUSize();
+    for (i = maxrows - 1; i>= 0; i--) {
+        m_networklayerList[i]->setPDUSize(SDUSizePreviousLayer);
+        SDUSizePreviousLayer = m_networklayerList[i]->SDUSize();
+    }
 }
 

@@ -54,6 +54,8 @@ void UdpSender::setWANLayerModel(NetworkLayerListModel *model)
         delete m_WANNetworkModel;
     }
     m_WANNetworkModel = model->clone();
+
+    m_WANNetworkModel->setUDPPDUSize(m_specUDPPDUSize);
 }
 
 void UdpSender::setDestination(QHostAddress address)
@@ -129,7 +131,9 @@ void UdpSender::setPduSize(uint pduSize, NetworkModel::Layer pduSizeLayer)
 
 
     m_specUDPPDUSize = m_networkModel.pduSize(NetworkModel::UDPLayer);
-    m_WANNetworkModel->setUDPPDUSize(m_specUDPPDUSize);
+    if (m_WANNetworkModel) {
+        m_WANNetworkModel->setUDPPDUSize(m_specUDPPDUSize);
+    }
 
     // Whe need to remove 8 bytes of the UDP Header to get the UDP Payload (datagram SDU) length.
     udpPayloadLength = m_specUDPPDUSize - 8;
@@ -220,13 +224,22 @@ int UdpSender::packetsNotSent()
 
 QList<int> UdpSender::WANsendingBandwidth()
 {
-    uint size;
+    uint PDUsize;
     QList<int> l;
     QList<uint> pduList;
+
+    if (m_WANNetworkModel == NULL) {
+        return l;
+    }
+
     pduList = m_WANNetworkModel->layerPDUSize();
 
-    foreach (size, pduList) {
-        l.append(size * m_sentPps);
+    if (pduList.isEmpty()) {
+        return l;
+    }
+
+    foreach (PDUsize, pduList) {
+        l.append(PDUsize * 8 * m_sentPps);
     }
 
     return l;
@@ -234,13 +247,18 @@ QList<int> UdpSender::WANsendingBandwidth()
 
 QList<int> UdpSender::WANreceivingBandwidth()
 {
-    uint size;
+    uint PDUsize;
     QList<int> l;
     QList<uint> pduList;
+
+    if (m_WANNetworkModel == NULL) {
+        return l;
+    }
+
     pduList = m_WANNetworkModel->layerPDUSize();
 
-    foreach (size, pduList) {
-        l.append(size * m_receivedPps);
+    foreach (PDUsize, pduList) {
+        l.append(PDUsize * 8 * m_receivedPps);
     }
 
     return l;

@@ -39,6 +39,8 @@ QVariant UdpSenderListModel::data(const QModelIndex &index, int role) const
         switch (index.column()) {
             case COL_SENDINGSTATS:
             case COL_RECEIVINGSTATS:
+            case COL_WANSENDINGSTATS:
+            case COL_WANRECEIVINGSTATS:
                 return Qt::AlignRight;
             default:
                 return Qt::AlignLeft;
@@ -116,6 +118,10 @@ QVariant UdpSenderListModel::data(const QModelIndex &index, int role) const
             tmpText += "Percent lost: " + l.toString(percent) + "%\n";
             tmpText += "pps " + l.toString(s->receivingPps());
             return tmpText;
+        case COL_WANSENDINGSTATS:
+            return WANSendingStats(index);
+        case COL_WANRECEIVINGSTATS:
+           return WANReceivingStats(index);
     }
     return QVariant();
 }
@@ -493,6 +499,78 @@ QString UdpSenderListModel::totalPacketsStats()
     tmpText += "Packets lost: " + l.toString(packetsLost) + "\n";
     tmpText += "Percent lost: " + l.toString(percent) + "%";
     return tmpText;
+}
+
+QString UdpSenderListModel::WANSendingStats(const QModelIndex &index) const
+{
+    UdpSender *s = m_udpSenderList[index.row()];
+    QString tmpText = "";
+
+    if (m_WANLayerModel == NULL) {
+        return "WAN Model not initialised";
+    }
+
+    QList <int> bwList = s->WANsendingBandwidth();
+    QList <QString> nameList = m_WANLayerModel->layerShortNameList();
+
+    int count = bwList.count();
+    if (count != nameList.count()) {
+        return "Error in WAN model";
+    }
+
+    QLocale l = QLocale();
+    int i;
+
+    for (i = 0; i < count; i++) {
+        tmpText += nameList[i] + " ";
+        tmpText += l.toString((qreal) bwList[i] / m_BandwidthUnit, 'f', 2);
+        if (i != count - 1) {
+            tmpText += "\n";
+        }
+    }
+
+    return tmpText;
+}
+
+QString UdpSenderListModel::WANReceivingStats(const QModelIndex &index) const
+{
+    UdpSender *s = m_udpSenderList[index.row()];
+    QString tmpText = "";
+
+    if (m_WANLayerModel == NULL) {
+        return "WAN Model not initialised";
+    }
+
+    QList <int> bwList = s->WANreceivingBandwidth();
+    QList <QString> nameList = m_WANLayerModel->layerShortNameList();
+
+    int count = bwList.count();
+    if (count != nameList.count()) {
+        return "Error in WAN model";
+    }
+
+    QLocale l = QLocale();
+    int i;
+
+    for (i = 0; i < count; i++) {
+        tmpText += nameList[i] + " ";
+        tmpText += l.toString((qreal) bwList[i] / m_BandwidthUnit, 'f', 2);
+        if (i != count - 1) {
+            tmpText += "\n";
+        }
+    }
+
+    return tmpText;
+}
+
+QString UdpSenderListModel::WANtotalReceivingStats()
+{
+    return "TODO :-)";
+}
+
+QString UdpSenderListModel::WANtotalPacketsStats()
+{
+    return "TODO :-)";
 }
 
 void UdpSenderListModel::updateStats()
