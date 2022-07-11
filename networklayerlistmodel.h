@@ -29,7 +29,6 @@ public:
     void setUDPPDUSize(uint size);
     void setPDUSize(const uint row, const uint size);
 
-
 private:
     QList<NetworkLayer *> m_networklayerList;
 

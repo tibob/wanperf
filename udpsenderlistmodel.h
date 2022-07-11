@@ -54,6 +54,7 @@ private:
 
 public slots:
     void updateStats();
+    void WANLayerModelChanged();
 
 private:
     QList<UdpSender *> m_udpSenderList;

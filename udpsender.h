@@ -21,6 +21,8 @@ public:
     NetworkModel networkModel();
 
    void setWANLayerModel(NetworkLayerListModel *model);
+   void updateWANLayerModel(NetworkLayerListModel *WANmodel);
+
 
 //    Destination Host - should this be part of the constructor?
     void setDestination(QHostAddress address);

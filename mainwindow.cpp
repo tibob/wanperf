@@ -161,6 +161,10 @@ void MainWindow::updateGlobalStats()
 void MainWindow::wanLayersChanged()
 {
     m_wanSubLayersModel->fillWithLayers(NetworkLayer::possibleSubLayers(m_wanLayersModel->lastLayer()));
+
+    senderListModel->WANLayerModelChanged();
+
+    ui->udpSenderView->resizeRowsToContents();
 }
 
 void MainWindow::on_renoveLowestLayer_clicked()

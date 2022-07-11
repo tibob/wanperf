@@ -287,6 +287,14 @@ void UdpSenderListModel::setWANLayerModel(NetworkLayerListModel *WANmodel)
     }
 }
 
+void UdpSenderListModel::WANLayerModelChanged()
+{
+    UdpSender *sender;
+    foreach (sender, m_udpSenderList) {
+        sender->updateWANLayerModel(m_WANLayerModel);
+    }
+}
+
 void UdpSenderListModel::setPDUSizeLayer(NetworkModel::Layer layer)
 {
     m_PDUSizeLayer = layer;
@@ -577,3 +585,4 @@ void UdpSenderListModel::updateStats()
 {
     emit dataChanged(index(0, COL_SENDINGSTATS), index(rowCount()-1, COL_RECEIVINGPACKETS));
 }
+

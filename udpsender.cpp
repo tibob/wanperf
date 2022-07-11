@@ -58,6 +58,20 @@ void UdpSender::setWANLayerModel(NetworkLayerListModel *model)
     m_WANNetworkModel->setUDPPDUSize(m_specUDPPDUSize);
 }
 
+void UdpSender::updateWANLayerModel(NetworkLayerListModel *WANmodel)
+{
+    if (WANmodel == NULL) {
+        return;
+    }
+    if (m_WANNetworkModel == NULL) {
+        setWANLayerModel(WANmodel);
+    } else {
+        m_WANNetworkModel->fillWithLayers(WANmodel->layerList());
+    }
+
+    m_WANNetworkModel->setUDPPDUSize(m_specUDPPDUSize);
+}
+
 void UdpSender::setDestination(QHostAddress address)
 {
     m_destination = address;
