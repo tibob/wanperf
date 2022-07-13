@@ -18,7 +18,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tabLayers">
        <attribute name="title">
@@ -79,16 +79,16 @@
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="layoutWidget">
+       <widget class="QWidget" name="">
         <property name="geometry">
          <rect>
-          <x>10</x>
-          <y>160</y>
+          <x>11</x>
+          <y>161</y>
           <width>658</width>
           <height>276</height>
          </rect>
         </property>
-        <layout class="QGridLayout" name="gridLayout_5">
+        <layout class="QGridLayout" name="gridLayout_9">
          <item row="0" column="0">
           <widget class="QLabel" name="label_6">
            <property name="text">
@@ -103,7 +103,7 @@
            </property>
           </widget>
          </item>
-         <item row="1" column="0" rowspan="2">
+         <item row="1" column="0" rowspan="3">
           <widget class="QTableView" name="wanLayers">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -135,7 +135,7 @@
            </property>
           </widget>
          </item>
-         <item row="1" column="2">
+         <item row="1" column="2" rowspan="3">
           <widget class="QTableView" name="wanSubLayers">
            <property name="selectionMode">
             <enum>QAbstractItemView::SingleSelection</enum>
@@ -154,6 +154,19 @@
             <string>Remove lowest layer</string>
            </property>
           </widget>
+         </item>
+         <item row="3" column="1">
+          <spacer name="verticalSpacer">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>138</height>
+            </size>
+           </property>
+          </spacer>
          </item>
         </layout>
        </widget>

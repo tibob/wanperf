@@ -19,6 +19,7 @@ public:
     void appendLayer(NetworkLayer::Layer layer);
     void removeLastLayer();
     NetworkLayer::Layer lastLayer();
+    bool isLastLayer(const QModelIndex &index);
     NetworkLayer::Layer layerAt(const QModelIndex &index);
     void fillWithLayers(QList<NetworkLayer::Layer> layerList);
     QList<NetworkLayer::Layer> layerList();

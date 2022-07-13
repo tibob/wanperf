@@ -39,6 +39,10 @@ private slots:
     void on_renoveLowestLayer_clicked();
     void on_addLayer_clicked();
 
+    void on_wanLayers_doubleClicked(const QModelIndex &index);
+
+    void on_wanSubLayers_doubleClicked(const QModelIndex &index);
+
 private:
     Ui::MainWindow *ui;
     quint64 sendingCounter = 10000;

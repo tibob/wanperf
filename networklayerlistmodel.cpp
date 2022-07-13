@@ -80,6 +80,15 @@ NetworkLayer::Layer NetworkLayerListModel::lastLayer()
     return m_networklayerList.last()->layer();
 }
 
+bool NetworkLayerListModel::isLastLayer(const QModelIndex &index)
+{
+    if (index.row() == m_networklayerList.count() - 1) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 NetworkLayer::Layer NetworkLayerListModel::layerAt(const QModelIndex &index)
 {
     NetworkLayer *n = m_networklayerList[index.row()];

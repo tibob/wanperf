@@ -54,10 +54,6 @@ MainWindow::MainWindow(QWidget *parent) :
     // Layers
     m_wanLayersModel = new NetworkLayerListModel();
     ui->wanLayers->setModel(m_wanLayersModel);
-    m_wanLayersModel->appendLayer(NetworkLayer::UDP);
-    m_wanLayersModel->appendLayer(NetworkLayer::IP);
-    m_wanLayersModel->appendLayer(NetworkLayer::EthernetL2);
-    m_wanLayersModel->appendLayer(NetworkLayer::EthernetL1);
 
     senderListModel->setWANLayerModel(m_wanLayersModel);
 
@@ -73,6 +69,11 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(m_wanLayersModel, SIGNAL(rowsInserted(QModelIndex,int,int)),
             this, SLOT(wanLayersChanged()));
+
+    m_wanLayersModel->appendLayer(NetworkLayer::UDP);
+    m_wanLayersModel->appendLayer(NetworkLayer::IP);
+    m_wanLayersModel->appendLayer(NetworkLayer::EthernetL2);
+    m_wanLayersModel->appendLayer(NetworkLayer::EthernetL1);
 
     // Refresh global stats every second
     QTimer *statsTimer = new QTimer(this);
@@ -180,4 +181,16 @@ void MainWindow::on_addLayer_clicked()
      }
      NetworkLayer::Layer layer = m_wanSubLayersModel->layerAt(index);
      m_wanLayersModel->appendLayer(layer);
+}
+
+void MainWindow::on_wanLayers_doubleClicked(const QModelIndex &index)
+{
+    if (m_wanLayersModel->isLastLayer(index)) {
+        m_wanLayersModel->removeLastLayer();
+    }
+}
+
+void MainWindow::on_wanSubLayers_doubleClicked(const QModelIndex &index)
+{
+    m_wanLayersModel->appendLayer(m_wanSubLayersModel->layerAt(index));
 }
