@@ -520,9 +520,10 @@ QString UdpSenderListModel::WANSendingStats(const QModelIndex &index) const
 
     QList <int> bwList = s->WANsendingBandwidth();
     QList <QString> nameList = m_WANLayerModel->layerShortNameList();
+    QList <bool> displayStatList = m_WANLayerModel->displayStatList();
 
     int count = bwList.count();
-    if (count != nameList.count()) {
+    if (count != nameList.count() || count != displayStatList.count()) {
         return "Error in WAN model";
     }
 
@@ -530,6 +531,9 @@ QString UdpSenderListModel::WANSendingStats(const QModelIndex &index) const
     int i;
 
     for (i = 0; i < count; i++) {
+        if (!displayStatList[i]) {
+            continue;
+        }
         tmpText += nameList[i] + " ";
         tmpText += l.toString((qreal) bwList[i] / m_BandwidthUnit, 'f', 2);
         if (i != count - 1) {
@@ -551,9 +555,10 @@ QString UdpSenderListModel::WANReceivingStats(const QModelIndex &index) const
 
     QList <int> bwList = s->WANreceivingBandwidth();
     QList <QString> nameList = m_WANLayerModel->layerShortNameList();
+    QList <bool> displayStatList = m_WANLayerModel->displayStatList();
 
     int count = bwList.count();
-    if (count != nameList.count()) {
+    if (count != nameList.count() || count != displayStatList.count()) {
         return "Error in WAN model";
     }
 
@@ -561,6 +566,9 @@ QString UdpSenderListModel::WANReceivingStats(const QModelIndex &index) const
     int i;
 
     for (i = 0; i < count; i++) {
+        if (!displayStatList[i]) {
+            continue;
+        }
         tmpText += nameList[i] + " ";
         tmpText += l.toString((qreal) bwList[i] / m_BandwidthUnit, 'f', 2);
         if (i != count - 1) {
@@ -573,6 +581,7 @@ QString UdpSenderListModel::WANReceivingStats(const QModelIndex &index) const
 
 QString UdpSenderListModel::WANtotalReceivingStats()
 {
+    // TODO: to be implemented
     return "TODO :-)";
 }
 

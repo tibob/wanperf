@@ -59,6 +59,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     m_wanSubLayersModel = new NetworkLayerListModel();
     ui->wanSubLayers->setModel(m_wanSubLayersModel);
+    ui->wanSubLayers->setColumnHidden(1, true);
     m_wanSubLayersModel->fillWithLayers(NetworkLayer::possibleSubLayers(NetworkLayer::IP));
 
     connect(m_wanLayersModel, SIGNAL(dataChanged(QModelIndex,QModelIndex,QVector<int>)),
