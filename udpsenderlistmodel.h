@@ -45,7 +45,7 @@ public:
     QString totalReceivingStats();
     QString totalPacketsStats();
     QString WANtotalReceivingStats();
-    QString WANtotalPacketsStats();
+    QString WANtotalSendingStats();
 
 private:
     QString WANSendingStats(const QModelIndex &index) const;

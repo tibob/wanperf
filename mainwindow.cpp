@@ -163,6 +163,10 @@ void MainWindow::updateGlobalStats()
     ui->sendingTotal->setText(senderListModel->totalSendingStats());
     ui->receivingTotal->setText(senderListModel->totalReceivingStats());
     ui->packetsTotal->setText(senderListModel->totalPacketsStats());
+
+    ui->WANReceivingTotal->setText(senderListModel->WANtotalReceivingStats());
+    ui->WANSendingTotal->setText(senderListModel->WANtotalSendingStats());
+
 }
 
 void MainWindow::wanLayersChanged()

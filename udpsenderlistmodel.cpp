@@ -253,6 +253,7 @@ bool UdpSenderListModel::insertRows(int position, int rows, const QModelIndex &/
     for (int row = 0; row < rows; row++) {
         sender = new UdpSender();
         sender->setDestination(m_destination);
+        sender->setWANLayerModel(m_WANLayerModel);
 
         m_udpSenderList.insert(position, sender);
         if (m_isGeneratingTraffic) {
@@ -586,13 +587,98 @@ QString UdpSenderListModel::WANReceivingStats(const QModelIndex &index) const
 
 QString UdpSenderListModel::WANtotalReceivingStats()
 {
-    // TODO: to be implemented
-    return "TODO :-)";
+    UdpSender *s;
+    QList <QString> nameList = m_WANLayerModel->layerShortNameList();
+    QList <bool> displayStatList = m_WANLayerModel->displayStatList();
+    QList <int> bwListTotal;
+    QList <int> bwList;
+    int i;
+
+    int count = nameList.count();
+    if (count != displayStatList.count()) {
+        return "Error in WAN model";
+    }
+
+    for (i = 0; i < count; i++) {
+        bwListTotal.append(0);
+    }
+
+    foreach(s, m_udpSenderList) {
+         bwList = s->WANreceivingBandwidth();
+         if (count != bwList.count()) {
+             return "Error in WAN model";
+         }
+         for (i = 0; i < count; i++) {
+             if (!displayStatList[i]) {
+                 continue;
+             }
+             bwListTotal[i] += bwList[i];
+         }
+    }
+
+    QString tmpText = "";
+    QLocale l = QLocale();
+    for (i = 0; i < count; i++) {
+        if (!displayStatList[i]) {
+            continue;
+        }
+        tmpText += nameList[i] + " ";
+        tmpText += l.toString((qreal) bwListTotal[i] / m_BandwidthUnit, 'f', 2);
+        // FIXME - this is not correct, as we may not display the last stat
+        if (i != count - 1) {
+            tmpText += "\n";
+        }
+    }
+
+    return tmpText;
 }
 
-QString UdpSenderListModel::WANtotalPacketsStats()
+QString UdpSenderListModel::WANtotalSendingStats()
 {
-    return "TODO :-)";
+    UdpSender *s;
+    QList <QString> nameList = m_WANLayerModel->layerShortNameList();
+    QList <bool> displayStatList = m_WANLayerModel->displayStatList();
+    QList <int> bwListTotal;
+    QList <int> bwList;
+    int i;
+
+    int count = nameList.count();
+    if (count != displayStatList.count()) {
+        return "Error in WAN model";
+    }
+
+    for (i = 0; i < count; i++) {
+        bwListTotal.append(0);
+    }
+
+    foreach(s, m_udpSenderList) {
+         bwList = s->WANsendingBandwidth();
+         if (count != bwList.count()) {
+             return "Error in WAN model";
+         }
+         for (i = 0; i < count; i++) {
+             if (!displayStatList[i]) {
+                 continue;
+             }
+             bwListTotal[i] += bwList[i];
+         }
+    }
+
+    QString tmpText = "";
+    QLocale l = QLocale();
+    for (i = 0; i < count; i++) {
+        if (!displayStatList[i]) {
+            continue;
+        }
+        tmpText += nameList[i] + " ";
+        tmpText += l.toString((qreal) bwListTotal[i] / m_BandwidthUnit, 'f', 2);
+        // FIXME - this is not correct, as we may not display the last stat
+        if (i != count - 1) {
+            tmpText += "\n";
+        }
+    }
+
+    return tmpText;
 }
 
 void UdpSenderListModel::updateStats()
