@@ -16,6 +16,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    QMainWindow::showMaximized();
 
     // This come first, as it is called from signals when setting up the drop Down Menus
     senderListModel = new UdpSenderListModel();
@@ -54,12 +55,16 @@ MainWindow::MainWindow(QWidget *parent) :
     // Layers
     m_wanLayersModel = new NetworkLayerListModel();
     ui->wanLayers->setModel(m_wanLayersModel);
+    ui->wanLayers->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+    ui->wanLayers->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
 
     senderListModel->setWANLayerModel(m_wanLayersModel);
 
     m_wanSubLayersModel = new NetworkLayerListModel();
     ui->wanSubLayers->setModel(m_wanSubLayersModel);
     ui->wanSubLayers->setColumnHidden(1, true);
+    ui->wanSubLayers->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+    ui->wanSubLayers->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
     m_wanSubLayersModel->fillWithLayers(NetworkLayer::possibleSubLayers(NetworkLayer::IP));
 
     connect(m_wanLayersModel, SIGNAL(dataChanged(QModelIndex,QModelIndex,QVector<int>)),

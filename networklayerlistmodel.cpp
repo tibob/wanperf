@@ -95,7 +95,7 @@ QVariant NetworkLayerListModel::headerData(int section, Qt::Orientation orientat
     case COL_NAME:
         return "Layer";
     case COL_DISPLAYSTAT:
-        return "Statistics";
+        return "Stats";
     }
 
     return QVariant();

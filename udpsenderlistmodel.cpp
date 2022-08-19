@@ -149,14 +149,17 @@ QVariant UdpSenderListModel::headerData(int section, Qt::Orientation orientation
         case COL_TC:
             return "Tc (msec)";
         case COL_SENDINGSTATS:
-            return "Sending bandwidth";
+            return "LAN sending BW";
         case COL_RECEIVINGSTATS:
-            return "Receiving bandwidth";
+            return "LAN receiving BW";
         case COL_SENDINGPACKETS:
             return "Packets Sent";
         case COL_RECEIVINGPACKETS:
             return "Packets Received";
-
+        case COL_WANSENDINGSTATS:
+            return "WAN sending BW";
+        case COL_WANRECEIVINGSTATS:
+           return "WAN receiving BW";
     }
     return QVariant();
 }
@@ -222,6 +225,8 @@ Qt::ItemFlags UdpSenderListModel::flags(const QModelIndex &index) const
             || index.column() == COL_RECEIVINGSTATS
             || index.column() == COL_SENDINGPACKETS
             || index.column() == COL_RECEIVINGPACKETS
+            || index.column() == COL_WANSENDINGSTATS
+            || index.column() == COL_WANRECEIVINGSTATS
             ) {
         return Qt::ItemIsSelectable;
     }
