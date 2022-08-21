@@ -30,7 +30,7 @@ QList<NetworkLayer::Layer> NetworkLayer::possibleSubLayers(NetworkLayer::Layer l
         list.append(NetworkLayer::EthernetL2woCRC);
         list.append(NetworkLayer::GRE);
         list.append(NetworkLayer::GREWithKey);
-        list.append(NetworkLayer::IPSec);
+        list.append(NetworkLayer::ESP_AES256_SHA_TUN);
         break;
     case NetworkLayer::EthernetL2woCRC:
         list.append(NetworkLayer::EthernetCRC);
@@ -44,7 +44,7 @@ QList<NetworkLayer::Layer> NetworkLayer::possibleSubLayers(NetworkLayer::Layer l
         break;
     case NetworkLayer::GRE:
     case NetworkLayer::GREWithKey:
-    case NetworkLayer::IPSec:
+    case NetworkLayer::ESP_AES256_SHA_TUN:
         list.append(NetworkLayer::IP);
         break;
     default:
@@ -92,6 +92,7 @@ NetworkLayer::Layer NetworkLayer::layer()
 
 uint NetworkLayer::setPDUSize(uint size)
 {
+    int tmpSDUSize;
     m_PDUSize = size;
 
     // Minimal PDU from Protocol
@@ -101,9 +102,15 @@ uint NetworkLayer::setPDUSize(uint size)
     m_PDUSize = qMin(m_PDUSize, m_maxPDUsize[m_layer]);
 
     switch (m_layer) {
-    case NetworkLayer::IPSec:
-        // FIXME: calculate padding accurately
-        m_SDUSize = m_PDUSize - m_overhead[m_layer];
+    case NetworkLayer::ESP_AES256_SHA_TUN:
+        // calculate maximal SDU Size (without padding)
+        tmpSDUSize = m_PDUSize - m_overhead[m_layer];
+        // if the Padding allows it, use the original SDU size
+        if (tmpSDUSize - m_ESPSDUSize < 16) {
+            m_SDUSize = m_ESPSDUSize;
+        } else {
+            m_SDUSize = tmpSDUSize;
+        }
         break;
     default:
         m_SDUSize = m_PDUSize - m_overhead[m_layer];
@@ -113,15 +120,27 @@ uint NetworkLayer::setPDUSize(uint size)
     return m_PDUSize;
 }
 
-uint NetworkLayer::setSDUSize(uint SDUSize)
+uint NetworkLayer::setSDUSize(uint size)
 {
+    int paddingSize;
+    int tmpSDUSize;
+
     switch (m_layer) {
-    case NetworkLayer::IPSec:
-        // FIXME: calculate padding accurately
-        m_PDUSize = SDUSize + m_overhead[m_layer];
+    case NetworkLayer::ESP_AES256_SHA_TUN:
+        // AES256 uses 16-Bytes blocks, so add padding accordingly
+        // padding includes next header and payload length fields (1 + 1  = 2 bytes)
+        paddingSize = (size + 2) % 16;
+        if (paddingSize != 0) {
+            paddingSize = 16 - paddingSize;
+        }
+        // adding padsing, SPI(4) + seq (4) + ESP Initialisatin Vector (16) +
+        // payload length (1) + next Header (1) + ICV SHA-HMAC (12)
+        m_PDUSize = size + paddingSize + 38;
+        // Keep the SDU Size, so we can try to resore it
+        m_ESPSDUSize = size;
         break;
     default:
-        m_PDUSize = SDUSize + m_overhead[m_layer];
+        m_PDUSize = size + m_overhead[m_layer];
         break;
     }
 
@@ -131,10 +150,17 @@ uint NetworkLayer::setSDUSize(uint SDUSize)
     // Maximal PDU to avoid fragmentation
     m_PDUSize = qMin(m_PDUSize, m_maxPDUsize[m_layer]);
 
+    // Now recalculate the SDU Size after the PDU Size has been adjusted
     switch (m_layer) {
-    case NetworkLayer::IPSec:
-        // FIXME: calculate padding accurately
-        m_SDUSize = m_PDUSize - m_overhead[m_layer];
+    case NetworkLayer::ESP_AES256_SHA_TUN:
+        // calculate maximal SDU Size (without padding)
+        tmpSDUSize = m_PDUSize - m_overhead[m_layer];
+        // if the Padding allows it, use the original SDU size
+        if (tmpSDUSize - m_ESPSDUSize < 16) {
+            m_SDUSize = m_ESPSDUSize;
+        } else {
+            m_SDUSize = tmpSDUSize;
+        }
         break;
     default:
         m_SDUSize = m_PDUSize - m_overhead[m_layer];

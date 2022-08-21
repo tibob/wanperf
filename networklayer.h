@@ -16,7 +16,7 @@ public:
         UDP,
         GRE,
         GREWithKey,
-        IPSec,
+        ESP_AES256_SHA_TUN,
         LAYER_COUNT // Used to know how much layer we have
     };
 
@@ -53,7 +53,7 @@ private:
         8,  // UDP
         4,  // GRE
         8,  // GRE with optional Key
-        56  // FIXME: IPSec has to be calculated because of padding
+        38  // ESP has to be calculated because of padding, 38 is the overhead without padding
     };
 
     // If defined, take the minimum size for the protocol. If not, take the header size.
@@ -66,7 +66,7 @@ private:
         24, // UDP - UDP hedaer + 2x 8 Bytes for timestamp and seq. Number.
         4,  // GRE
         8,  // GRE with optional Key
-        56  // FIXME: IPSec has to be calculated because of padding
+        38  // ESP has to be calculated because of padding, 38 is the overhead without padding
     };
 
     // We mean here the maximal PDU size in order to avoid fragmentation.
@@ -78,8 +78,8 @@ private:
         1500, // IP - IP MTU from IEE802.3 (without jumbo frames)
         1500, // UDP - no limit (we don't know what transports us)
         1500, // GRE - no limit (we don't know what transports us)
-        1500, // GRE with optional Key
-        1500  // IPSec has to be calculated because of padding
+        1500, // GREwKey - no limit (we don't know what transports us)
+        1500  // ESP - no limit (we don't know what transports us)
     };
 
     const char* m_shortNames[LAYER_COUNT] = {
@@ -91,7 +91,7 @@ private:
         "UDP",
         "GRE",
         "GRE+key",
-        "IPSec"
+        "ESP AES256+SHA Tun."
     };
 
     const char* m_longNames[LAYER_COUNT] = {
@@ -103,12 +103,15 @@ private:
         "UDP",
         "GRE",
         "GRE with tunnel key",
-        "IPSec"
+        "IPSec ESP Tunnel Mode AES256 & SHA-HMAC"
     };
 
 
     uint m_PDUSize;
     uint m_SDUSize;
+
+    /* As ESP adds a padding, we try to keep the ordiginal SDU stored */
+    uint m_ESPSDUSize = 0;
 
 };
 
