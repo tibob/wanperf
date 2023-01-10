@@ -22,6 +22,9 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
+    void closeEvent(QCloseEvent *event);
+
+
 public slots:
 
 
@@ -45,6 +48,10 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
+
+    void loadSettings();
+    void saveSettings();
+
     quint64 sendingCounter = 10000;
     quint64 receivedCounter = 0;
 

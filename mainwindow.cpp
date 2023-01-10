@@ -6,8 +6,8 @@
 #include <string.h>
 #include <QtEndian>
 #include <QDebug>
-
-
+#include <QSettings>
+#include <QCloseEvent>
 
 
 
@@ -81,6 +81,8 @@ MainWindow::MainWindow(QWidget *parent) :
     m_wanLayersModel->appendLayer(NetworkLayer::EthernetL2);
     m_wanLayersModel->appendLayer(NetworkLayer::EthernetL1);
 
+    loadSettings();
+
     // Refresh global stats every second
     QTimer *statsTimer = new QTimer(this);
     connect(statsTimer, SIGNAL(timeout()), this, SLOT(updateGlobalStats()));
@@ -90,6 +92,12 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    saveSettings();
+    event->accept();
 }
 
 /*!
@@ -106,7 +114,7 @@ void MainWindow::on_btnGenerate_clicked()
         ui->btnGenerate->setStyleSheet("");
         m_isGeneratingTraffic = false;
     } else {
-        QHostAddress destinationIP = QHostAddress(ui->destinationHost->text());
+        QHostAddress destinationIP = QHostAddress(ui->destinationHost->currentText());
 
         // NOTE: we should check this before starting generating
         if (destinationIP.protocol() != QAbstractSocket::IPv4Protocol) {
@@ -203,4 +211,24 @@ void MainWindow::on_wanLayers_doubleClicked(const QModelIndex &index)
 void MainWindow::on_wanSubLayers_doubleClicked(const QModelIndex &index)
 {
     m_wanLayersModel->appendLayer(m_wanSubLayersModel->layerAt(index));
+}
+
+void MainWindow::loadSettings()
+{
+    QSettings settings;
+    QStringList destinationList;
+
+    destinationList = settings.value("destinationlist", QStringList()).toStringList();
+    ui->destinationHost->addItems(destinationList);
+}
+
+void MainWindow::saveSettings()
+{
+    QSettings settings;
+    QStringList destinationList;
+
+    for (int index = 0; index < qMin(ui->destinationHost->count(), 10); index++) {
+        destinationList.append(ui->destinationHost->itemText(index));
+    }
+    settings.setValue("destinationlist", destinationList);
 }
