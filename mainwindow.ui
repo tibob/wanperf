@@ -18,7 +18,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tabLayers">
        <attribute name="title">
@@ -30,7 +30,7 @@
           <item>
            <widget class="QLabel" name="label">
             <property name="text">
-             <string>Destination</string>
+             <string>Destination IP:</string>
             </property>
            </widget>
           </item>
