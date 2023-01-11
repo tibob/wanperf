@@ -216,10 +216,26 @@ void MainWindow::on_wanSubLayers_doubleClicked(const QModelIndex &index)
 void MainWindow::loadSettings()
 {
     QSettings settings;
-    QStringList destinationList;
 
+    QStringList destinationList;
     destinationList = settings.value("destinationlist", QStringList()).toStringList();
     ui->destinationHost->addItems(destinationList);
+
+    int index;
+    index = settings.value("SizePDULayerIndex", 1).toInt();
+    index = qMax(index, 0);
+    index = qMin(index, ui->sizeLayer->count()-1);
+    ui->sizeLayer->setCurrentIndex(index);
+
+    index = settings.value("BandwidthPDULayerIndex", 1).toInt();
+    index = qMax(index, 0);
+    index = qMin(index, ui->bandwidthLayer->count()-1);
+    ui->bandwidthLayer->setCurrentIndex(index);
+
+    index = settings.value("BandwidthUnitIndex", 1).toInt();
+    index = qMax(index, 0);
+    index = qMin(index, ui->bandwidthUnit->count()-1);
+    ui->bandwidthUnit->setCurrentIndex(index);
 }
 
 void MainWindow::saveSettings()
@@ -231,4 +247,8 @@ void MainWindow::saveSettings()
         destinationList.append(ui->destinationHost->itemText(index));
     }
     settings.setValue("destinationlist", destinationList);
+
+    settings.setValue("SizePDULayerIndex", ui->sizeLayer->currentIndex());
+    settings.setValue("BandwidthPDULayerIndex", ui->bandwidthLayer->currentIndex());
+    settings.setValue("BandwidthUnitIndex", ui->bandwidthUnit->currentIndex());
 }
