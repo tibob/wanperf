@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QMAKE_CXXFLAGS  += -std=c++11
+QMAKE_CXXFLAGS  += -std=c++17
 QT              += core gui network
 QT              += websockets
 

@@ -681,6 +681,62 @@ QString UdpSenderListModel::WANtotalSendingStats()
     return tmpText;
 }
 
+void UdpSenderListModel::saveParameter(QSettings &settings)
+{
+    int row;
+    const int rowCount = m_udpSenderList.count();
+    UdpSender *sender;
+
+    settings.beginWriteArray("Flows");
+
+    for (row = 0; row < rowCount ; row++) {
+        settings.setArrayIndex(row);
+        sender = m_udpSenderList[row];
+
+        settings.setValue("name", sender->name());
+        settings.setValue("bandwidth", sender->specifiedBandwidth(m_BandwidthLayer));
+        settings.setValue("dscp", sender->dscp());
+        settings.setValue("size", sender->specifiedPduSize(m_PDUSizeLayer));
+        settings.setValue("tc", sender->tcMsec());
+    }
+
+    settings.endArray();
+}
+
+void UdpSenderListModel::loadParameter(QSettings &settings)
+{
+    int row;
+    UdpSender *sender;
+
+    // Tell the model we will change all the data
+    beginResetModel();
+
+    // Delete all items from memory
+    qDeleteAll(m_udpSenderList.begin(), m_udpSenderList.end());
+    // then remove them from the list
+    m_udpSenderList.clear();
+    const int rowCount = settings.beginReadArray("Flows");
+
+    for (row = 0; row < rowCount ; row++) {
+        settings.setArrayIndex(row);
+
+        sender = new UdpSender();
+        sender->setDestination(m_destination);
+        sender->setWANLayerModel(m_WANLayerModel);
+
+        sender->setName(settings.value("name").toString());
+        sender->setBandwidth(settings.value("bandwidth").toUInt(), m_BandwidthLayer);
+        sender->setDscp(settings.value("dscp").toUInt());
+        sender->setPduSize(settings.value("size").toUInt(), m_BandwidthLayer);
+        sender->setTcMsec(settings.value("tc").toUInt());
+
+        m_udpSenderList.append(sender);
+    }
+
+    // Tell the model that we are done with changing data
+    endResetModel();
+}
+
 void UdpSenderListModel::updateStats()
 {
     emit dataChanged(index(0, COL_SENDINGSTATS), index(rowCount()-1, COL_RECEIVINGPACKETS));

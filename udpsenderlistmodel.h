@@ -3,6 +3,7 @@
 
 #include <QAbstractTableModel>
 #include <QList>
+#include <QSettings>
 
 #include "udpsender.h"
 #include "networkmodel.h"
@@ -46,6 +47,11 @@ public:
     QString totalPacketsStats();
     QString WANtotalReceivingStats();
     QString WANtotalSendingStats();
+
+
+    // Saving/Loading Parameter
+    void saveParameter(QSettings &settings);
+    void loadParameter(QSettings &settings);
 
 private:
     QString WANSendingStats(const QModelIndex &index) const;

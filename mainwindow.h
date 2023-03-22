@@ -26,9 +26,6 @@ public:
 
 
 public slots:
-
-
-
     void updateGlobalStats();
     void wanLayersChanged();
 
@@ -46,14 +43,43 @@ private slots:
 
     void on_wanSubLayers_doubleClicked(const QModelIndex &index);
 
+    void on_action_Load_project_triggered();
+    void on_action_Save_project_triggered();
+    void on_actionSave_project_as_triggered();
+    void openRecentproject();
+
 private:
     Ui::MainWindow *ui;
 
     void loadSettings();
     void saveSettings();
+    bool saveProject(QString filename);
+    void setProjectFilename(QString fileName);
+    void uiLoadRecentProjects();
+    void addRecentProject(QString fileName);
+    void loadProject(QString fileName);
+
+    static const int DEFAULT_SizePDULayerIndex = 1;
+    static const int DEFAULT_BWPDULayerIndex = 1;
+    static const int DEFAULT_BandwidthUnitIndex = 2;
+
+
+    QString m_projectFileName;
+    static const int MAX_RECENT_PROJECTS = 5;
+    static const int FORMAT_VERSION = 1;
+    QStringList m_recentProjects;
+
 
     quint64 sendingCounter = 10000;
     quint64 receivedCounter = 0;
+    // Refresch stats every STAT_PERIOD (in msec)
+    static const int STAT_PERIOD = 1000;
+
+    // Keep an history of maximel MAX_DESTINTATIONS destination hosts
+    // TODO: MAX_DESTINATIONS should also be applied when adding a destination in the UI
+    // We need to declare MAX_DESTINATIONS als consexpr because we use it in qMin wich passes its arguments as
+    // a reference. C++17 makes an inline variable of it, so wie don't get an error at compilation time
+    static constexpr int MAX_DESTINATIONS = 5;
 
     enum flowColumns {
         COL_NAME = 0,

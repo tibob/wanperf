@@ -243,7 +243,7 @@ NetworkLayerListModel *NetworkLayerListModel::clone()
     NetworkLayerListModel *model = new NetworkLayerListModel();
 
     model->fillWithLayers(this->layerList());
-    // NOTE: we do not copy the m_displayStatsList as it is not used in udpsender for stats.
+    // we do not copy the m_displayStatsList as it is not used in udpsender for stats.
 
     return model;
 }
