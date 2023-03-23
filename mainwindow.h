@@ -77,7 +77,6 @@ private:
     static const int STAT_PERIOD = 1000;
 
     // Keep an history of maximel MAX_DESTINTATIONS destination hosts
-    // TODO: MAX_DESTINATIONS should also be applied when adding a destination in the UI
     // We need to declare MAX_DESTINATIONS als consexpr because we use it in qMin wich passes its arguments as
     // a reference. C++17 makes an inline variable of it, so wie don't get an error at compilation time
     static constexpr int MAX_DESTINATIONS = 10;
