@@ -58,6 +58,7 @@ private:
     void uiLoadRecentProjects();
     void addRecentProject(QString fileName);
     void loadProject(QString fileName);
+    void addToDestinationList(QString destination);
 
     static const int DEFAULT_SizePDULayerIndex = 1;
     static const int DEFAULT_BWPDULayerIndex = 1;
@@ -79,7 +80,7 @@ private:
     // TODO: MAX_DESTINATIONS should also be applied when adding a destination in the UI
     // We need to declare MAX_DESTINATIONS als consexpr because we use it in qMin wich passes its arguments as
     // a reference. C++17 makes an inline variable of it, so wie don't get an error at compilation time
-    static constexpr int MAX_DESTINATIONS = 5;
+    static constexpr int MAX_DESTINATIONS = 10;
 
     enum flowColumns {
         COL_NAME = 0,

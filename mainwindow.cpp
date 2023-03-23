@@ -112,16 +112,26 @@ void MainWindow::on_btnGenerate_clicked()
         ui->btnGenerate->setStyleSheet("");
         m_isGeneratingTraffic = false;
     } else {
-        QHostAddress destinationIP = QHostAddress(ui->destinationHost->currentText());
+        QString destinationString = ui->destinationHost->currentText();
 
-        // NOTE: we should check this before starting generating
+        // QHostAdress accepts "1234" as a valid IP-Adress, so we first mach against a RegExp
+        QRegularExpression reIPv4("^((25[0-5]|(2[0-4]|1\\d|[1-9]|)\\d)(\\.(?!$)|$)){4}$");
+        if (!reIPv4.match(destinationString).hasMatch()) {
+            // we only work with IPv4
+            ui->lbStatus->setText("<b>This is not a valid IPv4 Address</b>");
+            return;
+        }
+
+        QHostAddress destinationIP = QHostAddress(ui->destinationHost->currentText());
         if (destinationIP.protocol() != QAbstractSocket::IPv4Protocol) {
             // we only work with IPv4
-            ui->lbStatus->setText("Not an IPv4 Address");
+            ui->lbStatus->setText("<b>This is not a valid IPv4 Address</b>");
             return;
         } else {
             ui->lbStatus->setText("");
         }
+
+        addToDestinationList(destinationString);
         ui->destinationHost->setEnabled(false);
         senderListModel->setDestinationIP(destinationIP);
         senderListModel->generateTraffic();
@@ -165,7 +175,8 @@ void MainWindow::updateGlobalStats()
     NetworkModel::Layer layer = static_cast<NetworkModel::Layer>(ui->bandwidthLayer->currentData().toInt());
     qreal bandwidthUnit = ui->bandwidthUnit->currentData().toInt();
 
-    ui->specifiedBandwidth->setText(locale.toString(senderListModel->totalSpecifiedBandwidth(layer)/bandwidthUnit, 'f', 2));
+    ui->specifiedBandwidth->setText(
+                locale.toString(senderListModel->totalSpecifiedBandwidth(layer)/bandwidthUnit, 'f', 2));
     ui->sendingTotal->setText(senderListModel->totalSendingStats());
     ui->receivingTotal->setText(senderListModel->totalReceivingStats());
     ui->packetsTotal->setText(senderListModel->totalPacketsStats());
@@ -400,6 +411,28 @@ void MainWindow::loadProject(QString fileName)
     senderListModel->loadParameter(settings);
 
     setProjectFilename(fileName);
+}
+
+/** Adds a new destination to the destinationlist stored in ui->destinationHost
+ *  If the destination already is in the list, it will be put a the top of it
+ *  If MAX_DESTINATIONS is reached, remove the last entry
+ */
+void MainWindow::addToDestinationList(QString destination)
+{
+    int index;
+
+    index = ui->destinationHost->findText(destination);
+    if (index != -1) {
+        ui->destinationHost->removeItem(index);
+    }
+
+    ui->destinationHost->insertItem(0, destination);
+    ui->destinationHost->setCurrentIndex(0);
+
+    int count = ui->destinationHost->count();
+    if (count > MAX_DESTINATIONS) {
+        ui->destinationHost->removeItem(count -1);
+    }
 }
 
 void MainWindow::on_action_Load_project_triggered()
