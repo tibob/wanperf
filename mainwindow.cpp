@@ -298,7 +298,7 @@ bool MainWindow::saveProject(QString filename)
     settings.setValue("BandwidthPDULayerIndex", ui->bandwidthLayer->currentIndex());
     settings.setValue("BandwidthUnitIndex", ui->bandwidthUnit->currentIndex());
 
-    // BUG: save destination host
+    settings.setValue("DestinationHost", ui->destinationHost->currentText());
 
     senderListModel->saveParameter(settings);
 
@@ -407,6 +407,8 @@ void MainWindow::loadProject(QString fileName)
     ui->sizeLayer->setCurrentIndex(settings.value("SizePDULayerIndex",DEFAULT_SizePDULayerIndex).toInt());
     ui->bandwidthLayer->setCurrentIndex(settings.value("BandwidthPDULayerIndex", DEFAULT_BWPDULayerIndex).toInt());
     ui->bandwidthUnit->setCurrentIndex(settings.value("BandwidthUnitIndex", DEFAULT_BandwidthUnitIndex).toInt());
+
+    ui->destinationHost->setCurrentText(settings.value("DestinationHost", "").toString());
 
     senderListModel->loadParameter(settings);
 
