@@ -3,9 +3,12 @@
 
 #include <QtGlobal>
 #include <QString>
+#include <QStringList>
 
 /*!
  * \brief The NetworkModel class is used to calculate bandwidth and PDU-Size between differen OSI-Layers
+ *
+ * FIXME: This is used by the LAN Model an will be replaced by networklayerlistmodel in the future
  *
  * Actually the NetworkModel class is very static.
  * In the future, the NetworkModel may become dynamic in order to allow the user to specify his own Network Model with a lot of
@@ -19,16 +22,11 @@ public:
     NetworkModel();
 
     enum Layer {
-        EthernetLayer1 = 1,
+        EthernetLayer1 = 0,
         EthernetLayer2,
         EthernetLayer2woCRC,
-        CRCforEthernetLayer2,
         IPLayer,
-        UDPLayer,
-        GRELayer,
-        GRELayerWithKey,
-        DMVPNLayer,
-        IPSecLayer
+        UDPLayer
     };
 
     enum BandwidthUnit {
@@ -50,9 +48,6 @@ public:
 
     static QString layerName(NetworkModel::Layer layer);
     static QString layerShortName(NetworkModel::Layer layer);
-
-    QList<Layer> subLayers(NetworkModel::Layer layer);
-    QList<Layer> WANLayers();
 
 private:
     // Peramble = 7, Start of Delimiter = 1, Interpacket gap = 12
@@ -80,9 +75,6 @@ private:
     // Smalest and biggest UDP size in order to reach smallest (IP PDU-Lengeht 64) and biggest (IP MTU 1500) Ethernet Frame
     uint m_minUdpSize;
     uint m_maxUdpSize;
-
-
-    NetworkModel::Layer inputBandwidthLayer = NetworkModel::EthernetLayer2;
 };
 
 #endif // NETWORKMODEL_H

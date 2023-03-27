@@ -77,6 +77,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_wanLayersModel, SIGNAL(rowsInserted(QModelIndex,int,int)),
             this, SLOT(wanLayersChanged()));
 
+    connect(m_wanLayersModel, SIGNAL(modelReset()),
+            this, SLOT(wanLayersChanged()));
+
     m_wanLayersModel->appendLayer(NetworkLayer::UDP);
     m_wanLayersModel->appendLayer(NetworkLayer::IP);
     m_wanLayersModel->appendLayer(NetworkLayer::EthernetL2);
@@ -301,8 +304,7 @@ bool MainWindow::saveProject(QString filename)
     settings.setValue("DestinationHost", ui->destinationHost->currentText());
 
     senderListModel->saveParameter(settings);
-
-    // BUG We also need to save the WAN Model
+    m_wanLayersModel->saveParameter(settings);
 
     settings.sync();
 
@@ -318,6 +320,49 @@ bool MainWindow::saveProject(QString filename)
 
         return false;
     }
+}
+
+/** Loads the previous saved project from fileName
+
+    FIXME: test when Filename not readable or not in the right format
+*/
+void MainWindow::loadProject(QString fileName)
+{
+    if (fileName.length() == 0)
+        return;
+
+    if (m_isGeneratingTraffic) {
+        senderListModel->stopAllSender();
+        ui->destinationHost->setEnabled(true);
+        ui->btnGenerate->setText("Generate traffic");
+        ui->btnGenerate->setStyleSheet("");
+        m_isGeneratingTraffic = false;
+    }
+
+    QSettings settings(fileName, QSettings::IniFormat);
+
+    int version = settings.value("version", -1).toInt();
+
+    if (settings.status() != QSettings::NoError || version == -1) {
+        // There was a problem reading this file or the version is not present in the ini file
+        QMessageBox::critical(this,
+            "Could not load this project",
+            QString("A problem occured while loading file \"%1\". The project could not be loaded")
+                          .arg(fileName));
+
+        return;
+    }
+
+    ui->sizeLayer->setCurrentIndex(settings.value("SizePDULayerIndex",DEFAULT_SizePDULayerIndex).toInt());
+    ui->bandwidthLayer->setCurrentIndex(settings.value("BandwidthPDULayerIndex", DEFAULT_BWPDULayerIndex).toInt());
+    ui->bandwidthUnit->setCurrentIndex(settings.value("BandwidthUnitIndex", DEFAULT_BandwidthUnitIndex).toInt());
+
+    ui->destinationHost->setCurrentText(settings.value("DestinationHost", "").toString());
+
+    senderListModel->loadParameter(settings);
+    m_wanLayersModel->loadParameter(settings);
+
+    setProjectFilename(fileName);
 }
 
 /** Saves the filename to the private class variable and displays it in the window title */
@@ -371,48 +416,6 @@ void MainWindow::addRecentProject(QString fileName)
 
     // Reload the list of recent projects
     uiLoadRecentProjects();
-}
-
-/** Loads the previous saved project from fileName
-
-    FIXME: test when Filename not readable or not in the right format
-*/
-void MainWindow::loadProject(QString fileName)
-{
-    if (fileName.length() == 0)
-        return;
-
-    if (m_isGeneratingTraffic) {
-        senderListModel->stopAllSender();
-        ui->destinationHost->setEnabled(true);
-        ui->btnGenerate->setText("Generate traffic");
-        ui->btnGenerate->setStyleSheet("");
-        m_isGeneratingTraffic = false;
-    }
-
-    QSettings settings(fileName, QSettings::IniFormat);
-
-    int version = settings.value("version", -1).toInt();
-
-    if (settings.status() != QSettings::NoError || version == -1) {
-        // There was a problem reading this file or the version is not present in the ini file
-        QMessageBox::critical(this,
-            "Could not load this project",
-            QString("A problem occured while loading file \"%1\". The project could not be loaded")
-                          .arg(fileName));
-
-        return;
-    }
-
-    ui->sizeLayer->setCurrentIndex(settings.value("SizePDULayerIndex",DEFAULT_SizePDULayerIndex).toInt());
-    ui->bandwidthLayer->setCurrentIndex(settings.value("BandwidthPDULayerIndex", DEFAULT_BWPDULayerIndex).toInt());
-    ui->bandwidthUnit->setCurrentIndex(settings.value("BandwidthUnitIndex", DEFAULT_BandwidthUnitIndex).toInt());
-
-    ui->destinationHost->setCurrentText(settings.value("DestinationHost", "").toString());
-
-    senderListModel->loadParameter(settings);
-
-    setProjectFilename(fileName);
 }
 
 /** Adds a new destination to the destinationlist stored in ui->destinationHost

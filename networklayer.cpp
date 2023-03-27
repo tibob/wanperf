@@ -7,87 +7,45 @@ NetworkLayer::NetworkLayer(NetworkLayer::Layer layer)
     m_layer = layer;
 }
 
-NetworkLayer::~NetworkLayer()
-{
-    // we do not wand dead pointers on the layers around.
-    if (m_lowerLayer)
-        m_lowerLayer->removeHigherLayer();
-    // this should never occur as we cannot remove a layer which is currently encapsulated
-    Q_ASSERT(m_higherLayer == NULL);
-    if (m_higherLayer)
-        m_higherLayer->removeLowerLayer();
-}
-
 QList<NetworkLayer::Layer> NetworkLayer::possibleSubLayers(NetworkLayer::Layer layer)
 {
-    QList<NetworkLayer::Layer> list;
-    switch (layer) {
-    case NetworkLayer::UDP:
-        list.append(NetworkLayer::IP);
-        break;
-    case NetworkLayer::IP:
-        list.append(NetworkLayer::EthernetL2);
-        list.append(NetworkLayer::EthernetL2woCRC);
-        list.append(NetworkLayer::GRE);
-        list.append(NetworkLayer::GREWithKey);
-        list.append(NetworkLayer::ESP_AES256_SHA_TUN);
-        break;
-    case NetworkLayer::EthernetL2woCRC:
-        list.append(NetworkLayer::EthernetCRC);
-        break;
-    case NetworkLayer::EthernetL2:
-    case NetworkLayer::EthernetCRC:
-        list.append(EthernetL1);
-        break;
-    case NetworkLayer::EthernetL1:
-        /* no sublayer */
-        break;
-    case NetworkLayer::GRE:
-    case NetworkLayer::GREWithKey:
-    case NetworkLayer::ESP_AES256_SHA_TUN:
-        list.append(NetworkLayer::IP);
-        break;
-    default:
-        break;
-    }
-    return list;
+    Q_ASSERT(layer >= 0);
+    Q_ASSERT(layer < LAYER_COUNT);
+    return SUBLAYERS[layer];
 }
 
-void NetworkLayer::setLowerLayer(NetworkLayer *networkLayer)
+/* Returns true if layer ist a possible Sublayer of this class */
+bool NetworkLayer::hasPossibleSublayer(NetworkLayer::Layer layer)
 {
-    if (m_lowerLayer == networkLayer) {
-        // Lower layer already set
-        return;
+    QList<NetworkLayer::Layer> sublayers = possibleSubLayers(m_layer);
+    NetworkLayer::Layer sublayer;
+
+    foreach(sublayer, sublayers) {
+        if (layer == sublayer) {
+            return true;
+        }
     }
 
-    m_lowerLayer = networkLayer;
-    networkLayer->setHigherLayer(this);
-}
-
-void NetworkLayer::setHigherLayer(NetworkLayer *networkLayer)
-{
-    if (m_higherLayer == networkLayer) {
-        // Higher layer already set
-        return ;
-    }
-
-    m_higherLayer = networkLayer;
-    networkLayer->setLowerLayer(this);
-}
-
-void NetworkLayer::removeLowerLayer()
-{
-    m_lowerLayer = NULL;
-}
-
-void NetworkLayer::removeHigherLayer()
-{
-    m_higherLayer = NULL;
+    return false;
 }
 
 NetworkLayer::Layer NetworkLayer::layer()
 {
     return m_layer;
+}
+
+/* Get the LayerID from its shortname */
+NetworkLayer::Layer NetworkLayer::shortname2Layer(QString shortName)
+{
+    int i;
+
+    for (i = 0; i < LAYER_COUNT; i++) {
+        if (shortName == m_shortNames[i]) {
+            return static_cast<NetworkLayer::Layer>(i);
+        }
+    }
+
+    return static_cast<NetworkLayer::Layer>(-1);
 }
 
 uint NetworkLayer::setPDUSize(uint size)

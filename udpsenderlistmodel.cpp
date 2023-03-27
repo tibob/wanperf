@@ -708,13 +708,15 @@ void UdpSenderListModel::loadParameter(QSettings &settings)
     int row;
     UdpSender *sender;
 
-    // Tell the model we will change all the data
+    // Tell the model that we will change all the data
     beginResetModel();
 
     // Delete all items from memory
     qDeleteAll(m_udpSenderList.begin(), m_udpSenderList.end());
     // then remove them from the list
     m_udpSenderList.clear();
+
+
     const int rowCount = settings.beginReadArray("Flows");
 
     for (row = 0; row < rowCount ; row++) {
@@ -732,6 +734,8 @@ void UdpSenderListModel::loadParameter(QSettings &settings)
 
         m_udpSenderList.append(sender);
     }
+
+     settings.endArray();
 
     // Tell the model that we are done with changing data
     endResetModel();

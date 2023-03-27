@@ -9,6 +9,8 @@
  *
  * Constructs a NetworkModel. The default value dor \a type is NetworkModel::EthernetWithoutVLAN
  *
+ * FIXME: This is used by the LAN Model an will be replaced by networklayerlistmodel in the future
+ *
  */
 NetworkModel::NetworkModel()
 {
@@ -166,59 +168,8 @@ QString NetworkModel::layerShortName(NetworkModel::Layer layer)
     case UDPLayer:
         shortname = "UDP";
         break;
-    case GRELayer:
-        shortname = "GRE";
-        break;
-    case GRELayerWithKey:
-        shortname = "GREwKey";
-        break;
-    case IPSecLayer:
-        shortname = "IPSec";
-        break;
-    case DMVPNLayer:
-        shortname = "DMVPN";
-        break;
-    case CRCforEthernetLayer2:
-        shortname = "EthernetL2wCRC";
-        break;
     }
 
     return shortname;
 }
-
-QList<NetworkModel::Layer> NetworkModel::subLayers(NetworkModel::Layer layer)
-{
-    QList<NetworkModel::Layer> list;
-    switch (layer) {
-    case UDPLayer:
-        list.append(IPLayer);
-        break;
-    case IPLayer:
-        list.append(EthernetLayer2);
-        list.append(EthernetLayer2woCRC);
-        list.append(GRELayer);
-        list.append(GRELayerWithKey);
-        list.append(DMVPNLayer);
-        list.append(IPSecLayer);
-        break;
-    case EthernetLayer2woCRC:
-        list.append(CRCforEthernetLayer2);
-        break;
-    case EthernetLayer2:
-    case CRCforEthernetLayer2:
-        list.append(EthernetLayer1);
-        break;
-    case EthernetLayer1:
-        /* no sublayer */
-        break;
-    case GRELayer:
-    case GRELayerWithKey:
-    case DMVPNLayer:
-    case IPSecLayer:
-        list.append(IPLayer);
-        break;
-    }
-    return list;
-}
-
 

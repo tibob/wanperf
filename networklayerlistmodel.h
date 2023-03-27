@@ -4,6 +4,7 @@
 #include <QAbstractTableModel>
 #include <QObject>
 #include <QList>
+#include <QSettings>
 
 #include "networklayer.h"
 
@@ -35,6 +36,10 @@ public:
     NetworkLayerListModel *clone();
     void setUDPPDUSize(uint size);
     void setPDUSize(const uint row, const uint size);
+
+    // Saving/Loading Parameter
+    void saveParameter(QSettings &settings);
+    void loadParameter(QSettings &settings);
 
 private:
     QList<NetworkLayer *> m_networklayerList;

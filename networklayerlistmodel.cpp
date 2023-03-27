@@ -284,3 +284,95 @@ void NetworkLayerListModel::setPDUSize(const uint row, const uint size)
     }
 }
 
+/** Saves the networklayer list to settings
+ *
+ * we save the short name of the layers and not its enum value so that the stats are human readable
+ */
+void NetworkLayerListModel::saveParameter(QSettings &settings)
+{
+    int row;
+    const int rowCount = m_networklayerList.count();
+    NetworkLayer *layer;
+
+    // NOTE: as soon we want to user NetworkLayerListModel for the LAN Layers, we need to pass the settings section
+    // as an argument
+    settings.beginWriteArray("WAN-Layers");
+
+    for (row = 0; row < rowCount ; row++) {
+        settings.setArrayIndex(row);
+        layer = m_networklayerList[row];
+
+        settings.setValue("name", layer->layerShortName());
+        settings.setValue("stats", m_displayStatsList[row]);
+    }
+
+    settings.endArray();
+}
+
+/** Loads the networklayer list from settings
+ *
+ * As we saved the short name of the layers, we will interupt loading the layers as soon as a short name is unknown
+ */
+void NetworkLayerListModel::loadParameter(QSettings &settings)
+{
+    int row;
+    NetworkLayer *layer, *previousLayer;
+    NetworkLayer::Layer layerID;
+    QString layerName;
+    bool displayStats;
+
+    // Tell the model that we will change all the data
+    beginResetModel();
+
+    // Delete all items from memory
+    qDeleteAll(m_networklayerList.begin(), m_networklayerList.end());
+    // then remove them from the list
+    m_networklayerList.clear();
+
+    // a QList<bool> is easier to clean ;-)
+    m_displayStatsList.clear();
+
+    // NOTE: as soon we want to user NetworkLayerListModel for the LAN Layers, we need to pass the settings section
+    // as an argument
+    const int rowCount = settings.beginReadArray("WAN-Layers");
+
+    for (row = 0; row < rowCount ; row++) {
+        settings.setArrayIndex(row);
+
+        layerName = settings.value("name", "").toString();
+        displayStats = settings.value("stats", false).toBool();
+
+        layerID = NetworkLayer::shortname2Layer(layerName);
+        if (row == 0) {
+            if (layerID != NetworkLayer::UDP) {
+                // The first layer must always be UDP. Insert it an break
+                layer = new NetworkLayer(NetworkLayer::UDP);
+                m_networklayerList.append(layer);
+                m_displayStatsList.append(true);
+                break;
+            }
+        } else {
+            // For rows > 0, check if this is an acceptable Layer. If not, break
+            if (!previousLayer->hasPossibleSublayer(layerID)) {
+                break;
+            }
+        }
+        layer = new NetworkLayer(layerID);
+        m_networklayerList.append(layer);
+        m_displayStatsList.append(displayStats);
+        previousLayer = layer;
+    }
+
+    // If there was a problem with the project, at least insert an UDP Layer
+    if (m_networklayerList.count() == 0) {
+        layer = new NetworkLayer(NetworkLayer::UDP);
+        m_networklayerList.append(layer);
+        m_displayStatsList.append(true);
+    }
+
+    settings.endArray();
+
+    // Tell the model that we are done with changing data
+    endResetModel();
+}
+
