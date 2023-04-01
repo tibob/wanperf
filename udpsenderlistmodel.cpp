@@ -328,10 +328,6 @@ void UdpSenderListModel::setBandwidthUnit(int bandwidthUnit)
 {
     m_BandwidthUnit = bandwidthUnit;
 
-    // FIXME: I'd like to have the BandwidthUnit in the Header, but we have to pass
-    // a Networkmodel::BandwidthUnit, so that we can get the name an the value from the Networkmodel
-    //     emit headerDataChanged(Qt::Horizontal, 0, columnCount());
-
     emit dataChanged(index(0, 0), index(rowCount()-1, columnCount()-1));
 }
 
