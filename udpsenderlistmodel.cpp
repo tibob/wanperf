@@ -515,6 +515,7 @@ QString UdpSenderListModel::WANSendingStats(const QModelIndex &index) const
 {
     UdpSender *s = m_udpSenderList[index.row()];
     QString tmpText = "";
+    bool newlineNeeded = false;
 
     if (m_WANLayerModel == NULL) {
         return "WAN Model not initialised";
@@ -536,11 +537,12 @@ QString UdpSenderListModel::WANSendingStats(const QModelIndex &index) const
         if (!displayStatList[i]) {
             continue;
         }
-        tmpText += nameList[i] + " ";
-        tmpText += l.toString((qreal) bwList[i] / m_BandwidthUnit, 'f', 2);
-        if (i != count - 1) {
+        if (newlineNeeded) {
             tmpText += "\n";
         }
+        tmpText += nameList[i] + " ";
+        tmpText += l.toString((qreal) bwList[i] / m_BandwidthUnit, 'f', 2);
+        newlineNeeded = true;
     }
 
     return tmpText;
@@ -550,6 +552,7 @@ QString UdpSenderListModel::WANReceivingStats(const QModelIndex &index) const
 {
     UdpSender *s = m_udpSenderList[index.row()];
     QString tmpText = "";
+    bool newlineNeeded = false;
 
     if (m_WANLayerModel == NULL) {
         return "WAN Model not initialised";
@@ -571,11 +574,12 @@ QString UdpSenderListModel::WANReceivingStats(const QModelIndex &index) const
         if (!displayStatList[i]) {
             continue;
         }
-        tmpText += nameList[i] + " ";
-        tmpText += l.toString((qreal) bwList[i] / m_BandwidthUnit, 'f', 2);
-        if (i != count - 1) {
+        if (newlineNeeded) {
             tmpText += "\n";
         }
+        tmpText += nameList[i] + " ";
+        tmpText += l.toString((qreal) bwList[i] / m_BandwidthUnit, 'f', 2);
+        newlineNeeded = true;
     }
 
     return tmpText;
@@ -613,17 +617,18 @@ QString UdpSenderListModel::WANtotalReceivingStats()
     }
 
     QString tmpText = "";
+    bool newlineNeeded = false;
     QLocale l = QLocale();
     for (i = 0; i < count; i++) {
         if (!displayStatList[i]) {
             continue;
         }
-        tmpText += nameList[i] + " ";
-        tmpText += l.toString((qreal) bwListTotal[i] / m_BandwidthUnit, 'f', 2);
-        // FIXME - this is not correct, as we may not display the last stat
-        if (i != count - 1) {
+        if (newlineNeeded) {
             tmpText += "\n";
         }
+        tmpText += nameList[i] + " ";
+        tmpText += l.toString((qreal) bwListTotal[i] / m_BandwidthUnit, 'f', 2);
+        newlineNeeded = true;
     }
 
     return tmpText;
@@ -661,17 +666,18 @@ QString UdpSenderListModel::WANtotalSendingStats()
     }
 
     QString tmpText = "";
+    bool newlineNeeded = false;
     QLocale l = QLocale();
     for (i = 0; i < count; i++) {
         if (!displayStatList[i]) {
             continue;
         }
-        tmpText += nameList[i] + " ";
-        tmpText += l.toString((qreal) bwListTotal[i] / m_BandwidthUnit, 'f', 2);
-        // FIXME - this is not correct, as we may not display the last stat
-        if (i != count - 1) {
+        if (newlineNeeded) {
             tmpText += "\n";
         }
+        tmpText += nameList[i] + " ";
+        tmpText += l.toString((qreal) bwListTotal[i] / m_BandwidthUnit, 'f', 2);
+        newlineNeeded = true;
     }
 
     return tmpText;
