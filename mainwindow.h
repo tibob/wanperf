@@ -78,7 +78,7 @@ private:
 
     // Keep an history of maximel MAX_DESTINTATIONS destination hosts
     // We need to declare MAX_DESTINATIONS als consexpr because we use it in qMin wich passes its arguments as
-    // a reference. C++17 makes an inline variable of it, so wie don't get an error at compilation time
+    // a reference. C++17 makes an inline variable of it, so we don't get an error at compilation time
     static constexpr int MAX_DESTINATIONS = 10;
 
     enum flowColumns {

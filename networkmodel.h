@@ -50,14 +50,17 @@ public:
     static QString layerShortName(NetworkModel::Layer layer);
 
 private:
+    // We need to declare the static variables als consexpr because we use it in qMin wich passes its arguments as
+    // a reference. C++17 makes an inline variable of it, so we don't get an error at compilation time
+
     // Peramble = 7, Start of Delimiter = 1, Interpacket gap = 12
-    uint m_L1overhead;
+    static constexpr uint m_L1overhead = 20;
     // SRC = 6, DST = 6, Ethertype = 2, CRC = 4
-    uint m_L2overhead;
+    static constexpr uint m_L2overhead = 18;
     // SRC = 6, DST = 6, Ethertype = 2
-    uint m_L2noCRCoverhead;
+    static constexpr uint m_L2noCRCoverhead = 14;
     // IP Header
-    uint m_L3overhead;
+    static constexpr uint m_L3overhead = 20;
 
     // Current udp Size & bandwith. These are the reference for converting into other Layers
     uint m_udpSize;
@@ -72,9 +75,13 @@ private:
     // NOTE: Tc could be used to calculate Bc (in packets) and from it the bandwidth that realy will be sent.
     qreal m_pps;
 
-    // Smalest and biggest UDP size in order to reach smallest (IP PDU-Lengeht 64) and biggest (IP MTU 1500) Ethernet Frame
-    uint m_minUdpSize;
-    uint m_maxUdpSize;
+    // Smalest and biggest UDP size in order to reach smallest (IP PDU-Lengeht 64) and biggest (IP MTU 1500)
+    // Ethernet Frame
+
+    // Minimal Ethernet length = 64 bytes, minus ethernet header, minus IP header (20 Bytes)
+    static constexpr uint m_minUdpSize = 64 - 18 - 20;
+    // IP MTU minus IP header
+    static constexpr uint m_maxUdpSize = 1500 - 20;
 };
 
 #endif // NETWORKMODEL_H
