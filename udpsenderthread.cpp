@@ -124,8 +124,8 @@ void UdpSenderThread::stop()
  *
  * The stats are sent with an emited signal, which is thread-safe.
  *
- * NOTE: this is Linux-Only code.
- * Hints for Sockets with Linux & Windows:
+ * This is Linux-Only code. If someone wants to port to windows, here are
+ * hints for Sockets with Linux & Windows:
  * https://handsonnetworkprogramming.com/articles/socket-error-message-text/
  */
 

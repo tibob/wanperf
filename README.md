@@ -13,12 +13,17 @@ know what you are doing. You could disrupt the production environment or at leas
 
 Please be aware that your few parameters an clicks can produce lots of network traffic. Use at your own risk!
 
-# How to run from source
+## How to run from source
 wanperf is been developped under Debian GNU/Linux. It probably will run on any linux system, maybe on BSD-Systems.
+It will not run under Microsoft Windows (until someone ports the code).
 
 udpecho_ebpf will probably only run on linux systems.
 
 Both have not been ported to Windows, and probably won't run there for now.
+
+## sender & satellite
+In order to run wanperf, you need a computer with an ethernet NIC as a sender (wanperf itself, which run
+as a GUI) and a second computer (satellite) with an ethernet NIC, that echoes the received packets.
 
 ## satellite
 You need a satellite that echoes UDP datagrams back. You could use any udp echo server, but they probably won't mirror
@@ -59,7 +64,7 @@ sudo ./udpecho_ebpf.py enp40s0
 ### Warnings
 Ignore the warnings. They come from the ebpf upstream and will be fixed in a future release.
 
-## GUI (wanperf)
+## sender GUI (wanperf)
 ### Compile wanperf
 Dependency: qt5
 '''
