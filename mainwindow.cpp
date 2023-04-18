@@ -10,6 +10,7 @@
 #include <QCloseEvent>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QStandardPaths>
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -442,9 +443,18 @@ void MainWindow::addToDestinationList(QString destination)
 
 void MainWindow::on_action_Load_project_triggered()
 {
+    QString home;
+    QList<QString> homes = QStandardPaths::standardLocations(QStandardPaths::HomeLocation);
+    if (homes.isEmpty()) {
+        // homes is per API never empty, but we get a compiler warning wenn we drectly use ...standardLocations(...)[0]
+        home = "";
+    } else {
+        home = homes[0];
+    }
+
     QString fileName = QFileDialog::getOpenFileName(this,
                         tr("Choose project"),
-                        QDir::currentPath(),   // FIXME: save last path
+                        home,
                         "wanperf projects (*.wanperf);;All files (* *.*");
     if (fileName.length() == 0) // Cancel pressed
         return;
@@ -464,12 +474,18 @@ void MainWindow::on_action_Save_project_triggered()
 void MainWindow::on_actionSave_project_as_triggered()
 {
     QString fileName;
+    QString home;
+    QList<QString> homes = QStandardPaths::standardLocations(QStandardPaths::HomeLocation);
+    if (homes.isEmpty()) {
+        // homes is per API never empty, but we get a compiler warning wenn we drectly use ...standardLocations(...)[0]
+        home = "";
+    } else {
+        home = homes[0];
+    }
 
     fileName = QFileDialog::getSaveFileName(this, "Save File",
-                               // FIXME: use last project name
-                               // FIXME: save last path
-                               QDir::currentPath() + "/project.wanperf",
-                               "wanperf projects (*.wanperf);;All files (* *.*");
+                               home + "/project.wanperf",
+                               "wanperf projects (*.wanperf);;All files (* *.*)");
 
     if (fileName.length() == 0) // Cancel pressed
         return;
